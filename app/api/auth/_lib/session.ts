@@ -61,7 +61,15 @@ export function respondWithSession(data: GatewaySession, status = 200) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/api/auth",
+    // Must be site-wide, not scoped to /api/auth: proxy.ts (the edge guard)
+    // reads this cookie on completely different routes (/feed, /login, etc.)
+    // to decide whether to redirect. Scoping it to /api/auth means the
+    // browser never attaches it to those requests, so proxy.ts always sees
+    // "no session" there and bounces straight back to /login even right
+    // after a successful login/OAuth exchange - this was the actual cause
+    // of that redirect-to-login-after-successful-login bug, not a timing
+    // race.
+    path: "/",
     maxAge: REFRESH_TOKEN_TTL_SECONDS,
   });
   return response;
@@ -76,7 +84,15 @@ export function clearRefreshCookie(response: NextResponse) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/api/auth",
+    // Must be site-wide, not scoped to /api/auth: proxy.ts (the edge guard)
+    // reads this cookie on completely different routes (/feed, /login, etc.)
+    // to decide whether to redirect. Scoping it to /api/auth means the
+    // browser never attaches it to those requests, so proxy.ts always sees
+    // "no session" there and bounces straight back to /login even right
+    // after a successful login/OAuth exchange - this was the actual cause
+    // of that redirect-to-login-after-successful-login bug, not a timing
+    // race.
+    path: "/",
     maxAge: 0,
   });
   return response;

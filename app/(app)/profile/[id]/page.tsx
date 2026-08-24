@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { ProfileScoreRing } from "@/components/profile/profile-score-ring";
 import { EditableListDialog } from "@/components/profile/editable-list-dialog";
+import { SkillsEditDialog } from "@/components/profile/skills-edit-dialog";
 import { StoryEditDialog } from "@/components/profile/story-edit-dialog";
 import { FundingEditDialog } from "@/components/profile/funding-edit-dialog";
 import { ConnectButton } from "@/components/profile/connect-button";
@@ -93,7 +94,8 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   }
 
   const isOwner = currentUser?.id === profile.userId;
-  const { identity, socialLinks } = profile;
+  const identity = profile;
+  const { socialLinks } = profile;
 
   return (
     <div className="container-page flex flex-col gap-6 py-6">
@@ -177,15 +179,9 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
               title="Skills"
               editor={
                 isOwner && (
-                  <EditableListDialog
-                    title="Skills"
-                    items={profile.skills}
-                    fields={[
-                      { key: "name", label: "Skill" },
-                      { key: "level", label: "Level (e.g. Advanced)" },
-                    ]}
-                    emptyItem={{ name: "", level: "" }}
-                    onSave={(items) => updateSkills.mutateAsync(items)}
+                  <SkillsEditDialog
+                    skills={profile.skills}
+                    onSave={(skills) => updateSkills.mutateAsync(skills)}
                   />
                 )
               }
@@ -194,10 +190,9 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                 <p className="text-sm text-muted-foreground">No skills added yet.</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {profile.skills.map((skill, i) => (
-                    <Badge key={skill.id ?? i} variant="outline">
-                      {skill.name}
-                      {skill.level ? ` · ${skill.level}` : ""}
+                  {profile.skills.map((skill) => (
+                    <Badge key={skill} variant="outline">
+                      {skill}
                     </Badge>
                   ))}
                 </div>

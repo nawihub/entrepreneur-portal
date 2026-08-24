@@ -111,8 +111,19 @@ export interface OAuthPayload {
 // Entrepreneurs
 // ---------------------------------------------------------------------------
 
-export type EntrepreneurStatus = "ACTIVE" | "SUSPENDED" | "INACTIVE";
+// Adds PENDING, missing from the original hand-typed version - this is the
+// status every entrepreneur starts in (see entrepreneur-service's
+// AuthEventHandlerService, which auto-creates a PENDING shell profile via
+// Kafka the instant any user registers, email or OAuth) until they finish
+// onboarding and call POST /{id}/activate.
+export type EntrepreneurStatus = "PENDING" | "ACTIVE" | "SUSPENDED" | "INACTIVE";
 
+// NOTE: socialLinks/story/education/references/memberships/awards/
+// funding/visibility/publicLinks below are NOT yet verified against the
+// real gateway response (EntrepreneurModel.EntrepreneurProfile) - only
+// the top-level identity/contact/status/skills fields have been fixed so
+// far (needed to unblock onboarding + the nav rails). Treat those nested
+// shapes as still-unverified same as everywhere else in this file.
 export interface SocialLinks {
   github?: string | null;
   linkedin?: string | null;
@@ -121,23 +132,10 @@ export interface SocialLinks {
   website?: string | null;
 }
 
-export interface EntrepreneurIdentity {
-  firstName: string;
-  lastName: string;
-  pronoun?: string | null;
-  profilePhotoUrl?: string | null;
-  gender?: string | null;
-  dateOfBirth?: string | null;
-  nationality?: string | null;
-  district?: string | null;
-  chiefdom?: string | null;
-  currentLocation?: string | null;
-}
-
 export interface ContactInfo {
   email?: string | null;
-  phone?: string | null;
-  address?: string | null;
+  phoneNumber?: string | null;
+  whatsappNumber?: string | null;
 }
 
 export interface StoryImpactStats {
@@ -152,12 +150,6 @@ export interface EntrepreneurStory {
   yearStarted?: number | null;
   impact?: StoryImpactStats | null;
   successStory?: string | null;
-}
-
-export interface SkillEntry {
-  id?: string;
-  name: string;
-  level?: string | null;
 }
 
 export interface EducationEntry {
@@ -220,13 +212,22 @@ export interface SectionVisibility {
 export interface EntrepreneurProfile {
   id: string;
   userId: string;
-  identity: EntrepreneurIdentity;
+  firstName: string;
+  lastName: string;
+  pronoun?: string | null;
+  profilePhotoUrl?: string | null;
+  gender?: string | null;
+  dateOfBirth?: string | null;
+  nationality?: string | null;
+  district?: string | null;
+  chiefdom?: string | null;
+  currentLocation?: string | null;
   contactInfo?: ContactInfo | null;
   socialLinks?: SocialLinks | null;
   status: EntrepreneurStatus;
   suspensionReason?: string | null;
   story?: EntrepreneurStory | null;
-  skills: SkillEntry[];
+  skills: string[];
   education: EducationEntry[];
   references: ReferenceEntry[];
   memberships: MembershipEntry[];
@@ -265,23 +266,91 @@ export interface VentureEntry {
 // Big Ideas
 // ---------------------------------------------------------------------------
 
-export type BigIdeaStatus =
-  | "SUBMITTED"
-  | "IN_REVIEW"
-  | "APPROVED"
-  | "DECLINED";
+// Idea.Gender (big-idea-service's own enum, distinct from the shared
+// commonapis Gender used elsewhere - different value set).
+export type IdeaGender = "MALE" | "FEMALE" | "OTHER" | "PREFER_NOT_TO_SAY";
+
+export type IdeaSubmissionType =
+  | "INDIVIDUAL"
+  | "TEAM"
+  | "EXISTING_BUSINESS"
+  | "ORGANISATION";
+
+export type IdeaStage =
+  | "CONCEPT_ONLY"
+  | "RESEARCH_COMPLETED"
+  | "PROTOTYPE_DEVELOPED"
+  | "TESTING_PILOT"
+  | "ALREADY_OPERATING";
+
+export type MaterialType =
+  | "PROTOTYPE_PHOTO"
+  | "VIDEO"
+  | "BUSINESS_PLAN"
+  | "PITCH_DECK"
+  | "OTHER";
+
+export type BigIdeaStatus = "PENDING" | "IN_REVIEW" | "APPROVED" | "DECLINED";
+
+export interface IdeaApplicant {
+  fullName: string;
+  gender: IdeaGender;
+  age: number;
+  phone: string;
+  email: string;
+  location: string;
+  occupation: string;
+  submissionType: IdeaSubmissionType;
+}
+
+// Response shape only omits the applicant's phone/email (see IdeaModel.ApplicantSummary
+// on the gateway) - everything else on CreateIdeaPayload is echoed back verbatim.
+export type IdeaApplicantSummary = Omit<IdeaApplicant, "phone" | "email">;
+
+export interface SupportingMaterial {
+  type: MaterialType;
+  url: string;
+  uploadedAt: string;
+}
 
 export interface BigIdea {
   id: string;
-  entrepreneurId: string;
-  title: string;
-  summary: string;
-  problem?: string | null;
-  solution?: string | null;
-  category?: string | null;
+  applicant: IdeaApplicantSummary;
+  ideaName: string;
+  oneLineDescription: string;
+  description: string;
+  problemStatement: string;
+  problemAudience?: string | null;
+  currentSolution?: string | null;
+  proposedSolution: string;
+  innovationDescription?: string | null;
+  inspiration?: string | null;
+  targetCustomers: string;
+  customerLocation?: string | null;
+  marketSize?: string | null;
+  competitors?: string | null;
+  competitiveAdvantage?: string | null;
+  revenueModel: string;
+  productOrService?: string | null;
+  pricingStrategy?: string | null;
+  mainCosts?: string | null;
+  startupCapitalNeeded?: string | null;
+  firstYearRevenueEstimate?: string | null;
+  potentialPartners?: string | null;
+  stage: IdeaStage;
+  testedWithCustomers: boolean;
+  testingLearnings?: string | null;
+  existingResources?: string | null;
+  challengesAndRisks?: string | null;
+  riskMitigationPlan?: string | null;
+  socialImpact?: string | null;
+  environmentalImpact?: string | null;
+  estimatedJobsCreated?: string | null;
+  growthPlan?: string | null;
+  whySelected?: string | null;
+  supportingMaterials: SupportingMaterial[];
   status: BigIdeaStatus;
-  reviewNote?: string | null;
-  supportingMaterialUrls?: string[];
+  declineReason?: string | null;
   createTime: string;
   updateTime: string;
 }
@@ -290,35 +359,87 @@ export interface BigIdea {
 // Businesses
 // ---------------------------------------------------------------------------
 
+// nawehub.commonapis.type.v1.Gender - shared across Business/Entrepreneur,
+// NOT the same value set as IdeaGender above.
+export type CommonGender = "MALE" | "FEMALE" | "PREFER_NOT_SAY";
+
+export type BusinessCategory =
+  | "AGRICULTURE"
+  | "TECHNOLOGY"
+  | "FASHION_TEXTILES"
+  | "FOOD_BEVERAGE"
+  | "HEALTHCARE"
+  | "EDUCATION"
+  | "CONSTRUCTION"
+  | "TRANSPORTATION"
+  | "RETAIL"
+  | "MANUFACTURING"
+  | "SERVICES"
+  | "TOURISM"
+  | "MINING"
+  | "ENERGY"
+  | "OTHER";
+
+export type BusinessDocType = "NATIONAL_ID" | "PASSPORT";
+
 export type BusinessStatus =
   | "PENDING"
   | "IN_REVIEW"
-  | "AWAITING_PAYMENT"
+  | "PAYMENT_PENDING"
+  | "PROCESSING"
   | "APPROVED"
   | "REJECTED";
 
+// Response shape (BusinessModel.BusinessSummary on the gateway) - deliberately
+// narrower than the create request: KYC-grade personal data (DOB, place of
+// birth, mother's name, NIN/passport, gender, contact info, ID scan) is
+// collected for verification but never echoed back over this API.
 export interface Business {
   id: string;
   trackingId: string;
-  ownerId: string;
-  name: string;
-  sector?: string | null;
-  description?: string | null;
-  district?: string | null;
+  ownerId?: string | null;
+  businessName: string;
+  businessAddress: string;
+  ownerName: string;
+  businessCategory: BusinessCategory;
+  otherCategory?: string | null;
+  businessEntityType: string;
+  businessActivities: string;
+  registrationNumber?: string | null;
+  registerDate?: string | null;
   status: BusinessStatus;
   rejectionReason?: string | null;
   createTime: string;
   updateTime: string;
 }
 
+// POST /api/v1/businesses request shape (BusinessDto.BusinessMetaDto) - all
+// fields below marked required are @NotBlank on the backend and will 400
+// without them.
 export interface BusinessMeta {
-  name: string;
-  sector?: string;
-  description?: string;
-  district?: string;
-  chiefdom?: string;
-  contactPhone?: string;
-  contactEmail?: string;
+  ownerId?: string;
+  businessName: string;
+  businessAddress: string;
+  ownerName: string;
+  ownerAddress: string;
+  placeOfBirth: string;
+  dateOfBirth: string; // ISO yyyy-MM-dd
+  gender: CommonGender;
+  nationality: string;
+  mothersName: string;
+  contactNumber: string;
+  email: string;
+  businessCategory: BusinessCategory;
+  registerDate?: string; // ISO yyyy-MM-dd, optional
+  businessActivities: string;
+  businessEntityType: string;
+  registrationNumber?: string;
+  isPublicRegister: boolean;
+  createNawehubAccount: boolean;
+  isAlreadyRegistered: boolean;
+  ninPassport: string;
+  occupation?: string;
+  docType?: BusinessDocType;
 }
 
 // ---------------------------------------------------------------------------
@@ -345,9 +466,12 @@ export interface Opportunity {
   updateTime: string;
 }
 
-export interface OpportunityAnalysis {
-  totalOpportunities: number;
-  byCategory: Array<{ category: string; count: number }>;
+// GET /api/v1/opportunities/analysis returns a bare JSON array of these -
+// not an object wrapper (there's no totalOpportunities from the backend,
+// derive it client-side from the array if needed).
+export interface CategoryAnalysisSummary {
+  category: string;
+  opportunityCount: number;
 }
 
 // ---------------------------------------------------------------------------

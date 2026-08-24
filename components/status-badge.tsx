@@ -8,6 +8,8 @@ type Status =
   | "DECLINED"
   | "PENDING"
   | "AWAITING_PAYMENT"
+  | "PAYMENT_PENDING"
+  | "PROCESSING"
   | "REJECTED"
   | "PENDING_VERIFICATION"
   | "ACTIVE"
@@ -22,6 +24,8 @@ const STATUS_STYLES: Record<Status, { label: string; variant: BadgeProps["varian
   DECLINED: { label: "Declined", variant: "error" },
   PENDING: { label: "Pending", variant: "info" },
   AWAITING_PAYMENT: { label: "Awaiting payment", variant: "warning" },
+  PAYMENT_PENDING: { label: "Payment pending", variant: "warning" },
+  PROCESSING: { label: "Processing", variant: "info" },
   REJECTED: { label: "Rejected", variant: "error" },
   PENDING_VERIFICATION: { label: "Pending verification", variant: "warning" },
   ACTIVE: { label: "Active", variant: "success" },

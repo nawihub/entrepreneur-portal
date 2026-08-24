@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/empty-state";
 import { useBusiness, useBusinessLifecycle } from "@/lib/queries/businesses";
 import { startCheckout } from "@/lib/api/payments";
 import { env } from "@/lib/env";
+import { formatEnumLabel } from "@/lib/utils";
 
 export default function BusinessDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -59,19 +60,28 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
             <StatusBadge status={business.status} />
             <span className="font-mono text-xs text-muted-foreground">#{business.trackingId}</span>
           </div>
-          <CardTitle className="text-2xl">{business.name}</CardTitle>
+          <CardTitle className="text-2xl">{business.businessName}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {business.description && <p className="text-sm leading-relaxed">{business.description}</p>}
+          {business.businessActivities && <p className="text-sm leading-relaxed">{business.businessActivities}</p>}
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            {business.sector && <span className="rounded-full bg-muted px-2.5 py-0.5">{business.sector}</span>}
-            {business.district && <span className="rounded-full bg-muted px-2.5 py-0.5">{business.district}</span>}
+            <span className="rounded-full bg-muted px-2.5 py-0.5">
+              {business.businessCategory === "OTHER" && business.otherCategory
+                ? business.otherCategory
+                : formatEnumLabel(business.businessCategory)}
+            </span>
+            {business.businessEntityType && (
+              <span className="rounded-full bg-muted px-2.5 py-0.5">{business.businessEntityType}</span>
+            )}
+            {business.businessAddress && (
+              <span className="rounded-full bg-muted px-2.5 py-0.5">{business.businessAddress}</span>
+            )}
           </div>
           {business.rejectionReason && (
             <div className="rounded-lg bg-error/10 p-3 text-sm text-error">{business.rejectionReason}</div>
           )}
 
-          {business.status === "AWAITING_PAYMENT" && (
+          {business.status === "PAYMENT_PENDING" && (
             <Button onClick={handlePayNow} disabled={checkingOut} className="w-fit">
               <CreditCard className="size-4" /> {checkingOut ? "Redirecting…" : "Pay registration fee"}
             </Button>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Lightbulb } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
+import { formatEnumLabel } from "@/lib/utils";
 import type { BigIdea } from "@/lib/api/types";
 
 export function BigIdeaCard({ idea }: { idea: BigIdea }) {
@@ -16,14 +17,12 @@ export function BigIdeaCard({ idea }: { idea: BigIdea }) {
           <StatusBadge status={idea.status} />
         </div>
         <Link href={`/big-ideas/${idea.id}`} className="font-display text-lg font-semibold hover:underline">
-          {idea.title}
+          {idea.ideaName}
         </Link>
-        <p className="line-clamp-2 text-sm text-muted-foreground">{idea.summary}</p>
-        {idea.category && (
-          <span className="w-fit rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-            {idea.category}
-          </span>
-        )}
+        <p className="line-clamp-2 text-sm text-muted-foreground">{idea.oneLineDescription}</p>
+        <span className="w-fit rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+          {formatEnumLabel(idea.applicant.submissionType)}
+        </span>
       </CardContent>
     </Card>
   );

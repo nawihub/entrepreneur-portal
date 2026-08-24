@@ -38,8 +38,8 @@ export function useRegisterBusiness() {
 export function useBusinessLifecycle(id: string) {
   const queryClient = useQueryClient();
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: businessKeys.detail(id) });
-    queryClient.invalidateQueries({ queryKey: businessKeys.all });
+    queryClient.invalidateQueries({ queryKey: businessKeys.detail(id) }).then();
+    queryClient.invalidateQueries({ queryKey: businessKeys.all }).then();
   };
   return {
     markInReview: useMutation({ mutationFn: () => businessesApi.markInReview(id), onSuccess: invalidate }),

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { authApi } from "@/lib/api/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { consumeOAuthState } from "@/lib/auth/oauth";
+import { resolvePostAuthDestination } from "@/lib/auth/post-auth-redirect";
 import type { OAuthProvider } from "@/lib/api/types";
 
 interface OAuthCallbackProps {
@@ -52,7 +53,7 @@ export function OAuthCallback({ provider, redirectUri, providerLabel }: OAuthCal
 
       const session = await authApi.oauth({ provider, authorizationCode: code, redirectUri });
       useAuthStore.getState().setSession(session.accessToken, session.user);
-      router.replace("/feed");
+      router.replace(await resolvePostAuthDestination("/feed"));
     }
 
     run().catch((err) => setError(err instanceof Error ? err.message : "Sign-in failed"));

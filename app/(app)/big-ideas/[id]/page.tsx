@@ -1,18 +1,37 @@
 "use client";
 
-import { use, useRef } from "react";
+import { use, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Paperclip, Trash2, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
+import { formatEnumLabel } from "@/lib/utils";
 import { useBigIdea, useBigIdeaModeration, useDeleteBigIdea } from "@/lib/queries/big-ideas";
 import { bigIdeasApi } from "@/lib/api/big-ideas";
 import { useQueryClient } from "@tanstack/react-query";
 import { bigIdeaKeys } from "@/lib/queries/big-ideas";
+import type { BigIdea, MaterialType } from "@/lib/api/types";
+
+const MATERIAL_TYPES: MaterialType[] = ["PITCH_DECK", "BUSINESS_PLAN", "PROTOTYPE_PHOTO", "VIDEO", "OTHER"];
+
+const DETAIL_SECTIONS: Array<{ label: string; key: keyof BigIdea }> = [
+  { label: "Problem statement", key: "problemStatement" },
+  { label: "Who has this problem?", key: "problemAudience" },
+  { label: "Proposed solution", key: "proposedSolution" },
+  { label: "What's new/innovative about it?", key: "innovationDescription" },
+  { label: "Target customers", key: "targetCustomers" },
+  { label: "Revenue model", key: "revenueModel" },
+  { label: "Main costs", key: "mainCosts" },
+  { label: "Startup capital needed", key: "startupCapitalNeeded" },
+  { label: "Challenges & risks", key: "challengesAndRisks" },
+  { label: "Social impact", key: "socialImpact" },
+  { label: "Growth plan", key: "growthPlan" },
+];
 
 export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -22,6 +41,7 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
   const moderation = useBigIdeaModeration(id);
   const deleteMutation = useDeleteBigIdea();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [materialType, setMaterialType] = useState<MaterialType>("OTHER");
 
   if (isLoading) {
     return (
@@ -41,7 +61,7 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
 
   async function handleUpload(file: File) {
     try {
-      await bigIdeasApi.addSupportingMaterial(id, file);
+      await bigIdeasApi.addSupportingMaterial(id, file, materialType);
       await queryClient.invalidateQueries({ queryKey: bigIdeaKeys.detail(id) });
       toast.success("Supporting material uploaded");
     } catch (err) {
@@ -56,9 +76,12 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
           <div>
             <div className="mb-2 flex items-center gap-2">
               <StatusBadge status={idea.status} />
-              {idea.category && <span className="text-xs text-muted-foreground">{idea.category}</span>}
+              <span className="text-xs text-muted-foreground">{formatEnumLabel(idea.stage)}</span>
+              <span className="text-xs text-muted-foreground">
+                · {formatEnumLabel(idea.applicant.submissionType)}
+              </span>
             </div>
-            <CardTitle className="text-2xl">{idea.title}</CardTitle>
+            <CardTitle className="text-2xl">{idea.ideaName}</CardTitle>
           </div>
           <Button
             variant="ghost"
@@ -77,23 +100,24 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
           </Button>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <p className="text-sm leading-relaxed">{idea.summary}</p>
-          {idea.problem && (
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Problem</p>
-              <p className="text-sm">{idea.problem}</p>
-            </div>
-          )}
-          {idea.solution && (
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Solution</p>
-              <p className="text-sm">{idea.solution}</p>
-            </div>
-          )}
-          {idea.reviewNote && (
-            <div className="rounded-lg bg-muted p-3 text-sm">
-              <p className="mb-1 font-medium">Review note</p>
-              <p className="text-muted-foreground">{idea.reviewNote}</p>
+          <p className="text-base font-medium leading-relaxed">{idea.oneLineDescription}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">{idea.description}</p>
+
+          {DETAIL_SECTIONS.map(({ label, key }) => {
+            const value = idea[key];
+            if (!value) return null;
+            return (
+              <div key={key}>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+                <p className="text-sm">{String(value)}</p>
+              </div>
+            );
+          })}
+
+          {idea.status === "DECLINED" && idea.declineReason && (
+            <div className="rounded-lg bg-error/10 p-3 text-sm text-error">
+              <p className="mb-1 font-medium">Decline reason</p>
+              <p>{idea.declineReason}</p>
             </div>
           )}
 
@@ -101,12 +125,17 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Supporting material
             </p>
-            {idea.supportingMaterialUrls?.length ? (
+            {idea.supportingMaterials.length ? (
               <ul className="flex flex-col gap-1">
-                {idea.supportingMaterialUrls.map((url) => (
-                  <li key={url}>
-                    <a href={url} target="_blank" rel="noreferrer" className="text-sm text-primary-600 hover:underline dark:text-primary-400">
-                      {url.split("/").pop()}
+                {idea.supportingMaterials.map((material) => (
+                  <li key={material.url}>
+                    <a
+                      href={material.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-primary-600 hover:underline dark:text-primary-400"
+                    >
+                      {formatEnumLabel(material.type)} — {material.url.split("/").pop()}
                     </a>
                   </li>
                 ))}
@@ -114,22 +143,39 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
             ) : (
               <p className="text-sm text-muted-foreground">None attached yet.</p>
             )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
-            />
-            <Button variant="outline" size="sm" className="mt-2" onClick={() => fileInputRef.current?.click()}>
-              <Paperclip className="size-4" /> Attach file
-            </Button>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Select value={materialType} onValueChange={(v) => setMaterialType(v as MaterialType)}>
+                <SelectTrigger className="w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MATERIAL_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {formatEnumLabel(type)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
+              />
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                <Paperclip className="size-4" /> Attach file
+              </Button>
+            </div>
           </div>
 
           {/* TODO(backend): UserInfo has no role field in the API catalog, so
               there's no way to check "is this viewer actually a moderator"
               client-side yet. These actions are left visible to any logged-in
               user rather than hidden behind a guess at a role system - gate
-              this properly once the gateway exposes roles/permissions. */}
+              this properly once the gateway exposes roles/permissions. Also
+              note: moderation.decline sends { note } but the backend's
+              DeclineIdeaDto requires a non-blank `reason` field - this action
+              needs a reason-prompt UI + a field-name fix before it'll work. */}
           <div className="flex flex-wrap gap-2 border-t border-border pt-4">
             <Button variant="outline" size="sm" onClick={() => moderation.review.mutate(undefined, { onError: () => toast.error("Failed") })}>
               Mark in review

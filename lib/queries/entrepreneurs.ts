@@ -8,27 +8,28 @@ import type {
   MembershipEntry,
   PublicLinkEntry,
   ReferenceEntry,
-  SkillEntry,
 } from "@/lib/api/types";
 
 export const entrepreneurKeys = {
   all: ["entrepreneurs"] as const,
   detail: (id: string) => [...entrepreneurKeys.all, "detail", id] as const,
   byUser: (userId: string) => [...entrepreneurKeys.all, "by-user", userId] as const,
+  me: () => [...entrepreneurKeys.all, "me"] as const,
   list: (params?: unknown) => [...entrepreneurKeys.all, "list", params] as const,
   journeys: (id: string) => [...entrepreneurKeys.all, id, "journeys"] as const,
   ventures: (id: string) => [...entrepreneurKeys.all, id, "ventures"] as const,
 };
 
-/** The logged-in user's own entrepreneur profile - loaded right after login
- * per the brief (GET /by-user/{userId}), and reused everywhere the app
- * shell needs "my" profile (left rail summary, profile edit forms). */
+/** The logged-in user's own entrepreneur profile - GET /api/v1/entrepreneurs/me
+ * resolves identity from the caller's own bearer token server-side, so no
+ * userId is needed here. Reused everywhere the app shell needs "my" profile
+ * (left rail summary, profile edit forms). */
 export function useOwnEntrepreneurProfile() {
-  const userId = useAuthStore((s) => s.user?.id);
+  const isAuthenticated = useAuthStore((s) => s.status === "authenticated");
   return useQuery({
-    queryKey: userId ? entrepreneurKeys.byUser(userId) : entrepreneurKeys.byUser("anonymous"),
-    queryFn: () => entrepreneursApi.getByUserId(userId!),
-    enabled: Boolean(userId),
+    queryKey: entrepreneurKeys.me(),
+    queryFn: () => entrepreneursApi.getMe(),
+    enabled: isAuthenticated,
     retry: false,
   });
 }
@@ -68,8 +69,8 @@ export function useEntrepreneurVentures(id: string | undefined) {
 function useInvalidateEntrepreneur(id: string) {
   const queryClient = useQueryClient();
   return () => {
-    queryClient.invalidateQueries({ queryKey: entrepreneurKeys.detail(id) });
-    queryClient.invalidateQueries({ queryKey: entrepreneurKeys.all });
+    queryClient.invalidateQueries({ queryKey: entrepreneurKeys.detail(id) }).then();
+    queryClient.invalidateQueries({ queryKey: entrepreneurKeys.all }).then();
   };
 }
 
@@ -108,7 +109,15 @@ export function useUpdateFunding(id: string) {
 export function useUpdateSkills(id: string) {
   const invalidate = useInvalidateEntrepreneur(id);
   return useMutation({
-    mutationFn: (payload: SkillEntry[]) => entrepreneursApi.updateSkills(id, payload),
+    mutationFn: (skills: string[]) => entrepreneursApi.updateSkills(id, skills),
+    onSuccess: invalidate,
+  });
+}
+
+export function useActivateEntrepreneur(id: string) {
+  const invalidate = useInvalidateEntrepreneur(id);
+  return useMutation({
+    mutationFn: () => entrepreneursApi.activate(id),
     onSuccess: invalidate,
   });
 }

@@ -14,6 +14,7 @@ const REFRESH_COOKIE = "nwh_refresh_token";
 const PROTECTED_PREFIXES = [
   "/feed",
   "/profile",
+  "/onboarding",
   "/entrepreneurs",
   "/big-ideas",
   "/businesses",
@@ -51,6 +52,7 @@ export const config = {
   matcher: [
     "/feed/:path*",
     "/profile/:path*",
+    "/onboarding/:path*",
     "/entrepreneurs/:path*",
     "/big-ideas/:path*",
     "/businesses/:path*",

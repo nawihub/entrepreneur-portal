@@ -19,18 +19,20 @@ export default function OpportunityAnalysisPage() {
 
       {isLoading ? (
         <Skeleton className="h-96" />
-      ) : !analysis || analysis.byCategory.length === 0 ? (
+      ) : !analysis || analysis.length === 0 ? (
         <EmptyState icon={BarChart3} title="No data yet" description="Analysis will appear once opportunities are categorized." />
       ) : (
         <Card className="animate-fade-in-up">
           <CardHeader>
             <CardTitle>By category</CardTitle>
-            <CardDescription>{analysis.totalOpportunities} opportunities total</CardDescription>
+            <CardDescription>
+              {analysis.reduce((sum, entry) => sum + entry.opportunityCount, 0)} opportunities total
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-96 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analysis.byCategory} layout="vertical" margin={{ left: 24 }}>
+                <BarChart data={analysis} layout="vertical" margin={{ left: 24 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                   <XAxis type="number" allowDecimals={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
                   <YAxis
@@ -47,7 +49,7 @@ export default function OpportunityAnalysisPage() {
                       color: "hsl(var(--popover-foreground))",
                     }}
                   />
-                  <Bar dataKey="count" fill="hsl(var(--color-primary-500))" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="opportunityCount" fill="hsl(var(--color-primary-500))" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

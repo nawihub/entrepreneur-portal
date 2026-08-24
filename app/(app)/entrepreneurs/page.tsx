@@ -69,15 +69,15 @@ function DirectoryContent() {
                 <Card className="card-interactive h-full animate-fade-in-up">
                   <CardContent className="flex flex-col items-center gap-2 pt-6 text-center">
                     <Avatar className="size-16">
-                      <AvatarImage src={entrepreneur.identity.profilePhotoUrl ?? undefined} />
-                      <AvatarFallback>{entrepreneur.identity.firstName?.[0]}</AvatarFallback>
+                      <AvatarImage src={entrepreneur.profilePhotoUrl ?? undefined} />
+                      <AvatarFallback>{entrepreneur.firstName?.[0]}</AvatarFallback>
                     </Avatar>
                     <p className="font-display font-semibold">
-                      {entrepreneur.identity.firstName} {entrepreneur.identity.lastName}
+                      {entrepreneur.firstName} {entrepreneur.lastName}
                     </p>
-                    {entrepreneur.identity.currentLocation && (
+                    {entrepreneur.currentLocation && (
                       <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin className="size-3" /> {entrepreneur.identity.currentLocation}
+                        <MapPin className="size-3" /> {entrepreneur.currentLocation}
                       </p>
                     )}
                     <div className="flex flex-wrap justify-center gap-1.5">

@@ -36,8 +36,8 @@ export function useOpportunityAnalysis() {
 export function useOpportunityModeration(id: string) {
   const queryClient = useQueryClient();
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: opportunityKeys.detail(id) });
-    queryClient.invalidateQueries({ queryKey: opportunityKeys.all });
+    queryClient.invalidateQueries({ queryKey: opportunityKeys.detail(id) }).then();
+    queryClient.invalidateQueries({ queryKey: opportunityKeys.all }).then();
   };
   return {
     review: useMutation({ mutationFn: (note?: string) => opportunitiesApi.review(id, note), onSuccess: invalidate }),

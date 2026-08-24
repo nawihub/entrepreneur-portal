@@ -41,15 +41,15 @@ export function RightRail() {
               className="flex items-center gap-3 rounded-lg p-1.5 -mx-1.5 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
             >
               <Avatar className="size-9">
-                <AvatarImage src={entrepreneur.identity.profilePhotoUrl ?? undefined} />
-                <AvatarFallback>{entrepreneur.identity.firstName?.[0]}</AvatarFallback>
+                <AvatarImage src={entrepreneur.profilePhotoUrl ?? undefined} />
+                <AvatarFallback>{entrepreneur.firstName?.[0]}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">
-                  {entrepreneur.identity.firstName} {entrepreneur.identity.lastName}
+                  {entrepreneur.firstName} {entrepreneur.lastName}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {entrepreneur.identity.currentLocation ?? "NaWeHub member"}
+                  {entrepreneur.currentLocation ?? "NaWeHub member"}
                 </p>
               </div>
             </Link>
@@ -64,7 +64,7 @@ export function RightRail() {
         </CardContent>
       </Card>
 
-      {analysis && analysis.byCategory.length > 0 && (
+      {analysis && analysis.length > 0 && (
         <Card className="animate-fade-in-up">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -72,10 +72,10 @@ export function RightRail() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-2.5">
-            {analysis.byCategory.slice(0, 5).map((entry) => (
+            {analysis.slice(0, 5).map((entry) => (
               <div key={entry.category} className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{entry.category}</span>
-                <span className="font-medium">{entry.count}</span>
+                <span className="font-medium">{entry.opportunityCount}</span>
               </div>
             ))}
             <Link

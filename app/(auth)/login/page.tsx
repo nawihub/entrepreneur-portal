@@ -15,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { authApi } from "@/lib/api/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { buildGithubAuthUrl, buildGoogleAuthUrl } from "@/lib/auth/oauth";
+import { resolvePostAuthDestination } from "@/lib/auth/post-auth-redirect";
 import { GoogleGlyph } from "@/components/icons/google-glyph";
 
 const schema = z.object({
@@ -26,7 +27,11 @@ type FormValues = z.infer<typeof schema>;
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/feed";
+  // Only honor an explicit ?next= (a deep link that bounced through
+  // /login) - the default landing spot still needs to go through
+  // resolvePostAuthDestination so a still-onboarding user lands on
+  // /onboarding instead of unconditionally /feed.
+  const explicitNext = searchParams.get("next");
   const [submitting, setSubmitting] = useState(false);
 
   const {
@@ -40,7 +45,7 @@ function LoginForm() {
     try {
       const session = await authApi.login(values);
       useAuthStore.getState().setSession(session.accessToken, session.user);
-      router.replace(next);
+      router.replace(explicitNext ?? (await resolvePostAuthDestination("/feed")));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");
     } finally {

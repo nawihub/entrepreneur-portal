@@ -25,8 +25,10 @@ export function LeftRail() {
     );
   }
 
-  // No entrepreneur profile registered yet - point them at creating one
-  // rather than rendering a broken/empty card.
+  // No entrepreneur profile registered yet (rare - normally
+  // entrepreneur-service auto-creates a PENDING shell via Kafka right after
+  // registration) - point them at onboarding rather than rendering a
+  // broken/empty card.
   if (isError || !profile) {
     return (
       <Card className="animate-fade-in-up">
@@ -39,7 +41,7 @@ export function LeftRail() {
             <p className="font-display font-semibold">{user?.displayName}</p>
             <p className="text-sm text-muted-foreground">Set up your entrepreneur profile</p>
           </div>
-          <Link href="/profile/me" className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-400">
+          <Link href="/onboarding" className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-400">
             Get started
           </Link>
         </CardContent>
@@ -47,7 +49,25 @@ export function LeftRail() {
     );
   }
 
-  const { identity } = profile;
+  if (profile.status === "PENDING") {
+    return (
+      <Card className="animate-fade-in-up">
+        <CardContent className="flex flex-col items-center gap-3 pt-6 text-center">
+          <Avatar className="size-16">
+            <AvatarImage src={profile.profilePhotoUrl ?? undefined} />
+            <AvatarFallback>{profile.firstName?.[0]}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-display font-semibold">{profile.firstName} {profile.lastName}</p>
+            <p className="text-sm text-muted-foreground">Finish setting up your profile</p>
+          </div>
+          <Link href="/onboarding" className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-400">
+            Continue
+          </Link>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="animate-fade-in-up overflow-hidden">
@@ -55,18 +75,18 @@ export function LeftRail() {
       <CardContent className="-mt-8 flex flex-col items-center gap-2 pt-0 text-center">
         <ProfileScoreRing score={profile.profileScore} size={72}>
           <Avatar className="size-16 border-2 border-card">
-            <AvatarImage src={identity.profilePhotoUrl ?? undefined} alt={identity.firstName} />
-            <AvatarFallback>{identity.firstName?.[0]}{identity.lastName?.[0]}</AvatarFallback>
+            <AvatarImage src={profile.profilePhotoUrl ?? undefined} alt={profile.firstName} />
+            <AvatarFallback>{profile.firstName?.[0]}{profile.lastName?.[0]}</AvatarFallback>
           </Avatar>
         </ProfileScoreRing>
 
         <Link href="/profile/me" className="font-display font-semibold hover:underline">
-          {identity.firstName} {identity.lastName}
+          {profile.firstName} {profile.lastName}
         </Link>
 
-        {identity.currentLocation && (
+        {profile.currentLocation && (
           <p className="flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPin className="size-3" /> {identity.currentLocation}
+            <MapPin className="size-3" /> {profile.currentLocation}
           </p>
         )}
 

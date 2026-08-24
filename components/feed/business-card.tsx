@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
+import { formatEnumLabel } from "@/lib/utils";
 import type { Business } from "@/lib/api/types";
 
 export function BusinessCard({ business }: { business: Business }) {
@@ -16,12 +17,20 @@ export function BusinessCard({ business }: { business: Business }) {
           <StatusBadge status={business.status} />
         </div>
         <Link href={`/businesses/${business.id}`} className="font-display text-lg font-semibold hover:underline">
-          {business.name}
+          {business.businessName}
         </Link>
-        {business.description && <p className="line-clamp-2 text-sm text-muted-foreground">{business.description}</p>}
+        {business.businessActivities && (
+          <p className="line-clamp-2 text-sm text-muted-foreground">{business.businessActivities}</p>
+        )}
         <div className="flex flex-wrap gap-2 pt-0.5 text-xs text-muted-foreground">
-          {business.sector && <span className="rounded-full bg-muted px-2.5 py-0.5">{business.sector}</span>}
-          {business.district && <span className="rounded-full bg-muted px-2.5 py-0.5">{business.district}</span>}
+          <span className="rounded-full bg-muted px-2.5 py-0.5">
+            {business.businessCategory === "OTHER" && business.otherCategory
+              ? business.otherCategory
+              : formatEnumLabel(business.businessCategory)}
+          </span>
+          {business.businessEntityType && (
+            <span className="rounded-full bg-muted px-2.5 py-0.5">{business.businessEntityType}</span>
+          )}
         </div>
       </CardContent>
     </Card>

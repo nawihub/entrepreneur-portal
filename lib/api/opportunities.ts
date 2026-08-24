@@ -1,8 +1,8 @@
 import { api } from "@/lib/api/http";
 import type {
+  CategoryAnalysisSummary,
   Money,
   Opportunity,
-  OpportunityAnalysis,
   Page,
   PageParams,
 } from "@/lib/api/types";
@@ -25,7 +25,8 @@ export const opportunitiesApi = {
   list: (params?: PageParams & { category?: string; status?: string }) =>
     api.get<Page<Opportunity>>(BASE, { query: params }),
 
-  analysis: () => api.get<OpportunityAnalysis>(`${BASE}/analysis`),
+  // Backend returns a bare array, not an object wrapper - see CategoryAnalysisSummary.
+  analysis: () => api.get<CategoryAnalysisSummary[]>(`${BASE}/analysis`),
 
   create: (payload: CreateOpportunityPayload) => {
     const { flier, ...meta } = payload;

@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { authApi } from "@/lib/api/auth";
 import { decodeJwtExpiryMs } from "@/lib/auth/jwt";
 import { useAuthStore } from "@/lib/store/auth-store";
+
+// OAuthCallback (rendered on these routes) is the authoritative handler for
+// establishing the session on first load there - see the race note below.
+const OAUTH_CALLBACK_PREFIX = "/auth/callback";
 
 /**
  * Mount-time silent refresh + proactive renewal scheduler.
@@ -24,8 +29,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const accessToken = useAuthStore((s) => s.accessToken);
   const clear = useAuthStore((s) => s.clear);
   const scheduledFor = useRef<number | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
+    // The OAuth callback pages (app/auth/callback/*) run their own code
+    // exchange via <OAuthCallback> and are the authoritative source of truth
+    // for the session on that first load - this mount-time refresh would
+    // race it. It 401s near-instantly (no refresh-token cookie exists yet,
+    // pre-exchange) while the exchange itself takes a real round trip to the
+    // provider, so on any slower network (or dev-server on-demand route
+    // compile) this can resolve AFTER the exchange already set the session
+    // and navigated to /feed, silently clearing the session that was just
+    // established and bouncing back to /login. Skip it entirely here.
+    if (pathname.startsWith(OAUTH_CALLBACK_PREFIX)) return;
+
     let cancelled = false;
     authApi
       .refresh()
@@ -39,8 +56,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-    // Only ever run once on mount - subsequent refreshes are scheduled below
-    // or triggered reactively by lib/api/http.ts on a 401.
+    // Only ever run once per full page load (not per client-side
+    // navigation) - deliberately NOT depending on `pathname` here. This
+    // provider persists across client-side route changes (it wraps the
+    // root layout), so a `[]` dep array already means "once per page load";
+    // adding `pathname` would re-fire this on every navigation, including
+    // immediately after the OAuth callback's own router.replace("/feed"),
+    // reintroducing the exact race this guard exists to prevent. Subsequent
+    // refreshes are scheduled below or triggered reactively by
+    // lib/api/http.ts on a 401.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
