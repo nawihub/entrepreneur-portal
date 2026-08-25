@@ -8,7 +8,6 @@ import type {
   MembershipEntry,
   Page,
   PageParams,
-  PublicLinkEntry,
   ReferenceEntry,
   VentureEntry,
 } from "@/lib/api/types";
@@ -98,20 +97,23 @@ export const entrepreneursApi = {
   // body - see EntrepreneurController.activate.
   activate: (id: string) => api.post<EntrepreneurProfile>(`${BASE}/${id}/activate`),
 
-  updateEducation: (id: string, payload: EducationEntry[]) =>
-    api.put<EntrepreneurProfile>(`${BASE}/${id}/education`, payload),
+  // Each of these wants its list wrapped in a named field - see
+  // EntrepreneurDto.Update{Education,References,Memberships,Awards,
+  // PublicLinks}Dto - not a bare array.
+  updateEducation: (id: string, records: EducationEntry[]) =>
+    api.put<EntrepreneurProfile>(`${BASE}/${id}/education`, { records }),
 
-  updateReferences: (id: string, payload: ReferenceEntry[]) =>
-    api.put<EntrepreneurProfile>(`${BASE}/${id}/references`, payload),
+  updateReferences: (id: string, references: ReferenceEntry[]) =>
+    api.put<EntrepreneurProfile>(`${BASE}/${id}/references`, { references }),
 
-  updateMemberships: (id: string, payload: MembershipEntry[]) =>
-    api.put<EntrepreneurProfile>(`${BASE}/${id}/memberships`, payload),
+  updateMemberships: (id: string, memberships: MembershipEntry[]) =>
+    api.put<EntrepreneurProfile>(`${BASE}/${id}/memberships`, { memberships }),
 
-  updateAwards: (id: string, payload: AwardEntry[]) =>
-    api.put<EntrepreneurProfile>(`${BASE}/${id}/awards`, payload),
+  updateAwards: (id: string, awards: AwardEntry[]) =>
+    api.put<EntrepreneurProfile>(`${BASE}/${id}/awards`, { awards }),
 
-  updatePublicLinks: (id: string, payload: PublicLinkEntry[]) =>
-    api.put<EntrepreneurProfile>(`${BASE}/${id}/public-links`, payload),
+  updatePublicLinks: (id: string, publicLinks: string[]) =>
+    api.put<EntrepreneurProfile>(`${BASE}/${id}/public-links`, { publicLinks }),
 
   addJourney: (id: string, payload: Omit<JourneyEntry, "id" | "createTime">) =>
     api.post<JourneyEntry>(`${BASE}/${id}/journeys`, payload),

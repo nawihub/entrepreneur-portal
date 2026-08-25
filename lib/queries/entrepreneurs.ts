@@ -6,7 +6,6 @@ import type {
   EducationEntry,
   FundingInfo,
   MembershipEntry,
-  PublicLinkEntry,
   ReferenceEntry,
 } from "@/lib/api/types";
 
@@ -157,7 +156,7 @@ export function useUpdateAwards(id: string) {
 export function useUpdatePublicLinks(id: string) {
   const invalidate = useInvalidateEntrepreneur(id);
   return useMutation({
-    mutationFn: (payload: PublicLinkEntry[]) => entrepreneursApi.updatePublicLinks(id, payload),
+    mutationFn: (payload: string[]) => entrepreneursApi.updatePublicLinks(id, payload),
     onSuccess: invalidate,
   });
 }

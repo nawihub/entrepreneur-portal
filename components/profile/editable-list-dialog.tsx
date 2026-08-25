@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -19,8 +20,10 @@ import {
 export interface FieldConfig<T> {
   key: keyof T & string;
   label: string;
-  type?: "text" | "number";
+  type?: "text" | "number" | "select";
   placeholder?: string;
+  /** Required when type is "select" - the fixed set of backend enum values. */
+  options?: Array<{ value: string; label: string }>;
 }
 
 interface EditableListDialogProps<T extends object> {
@@ -119,12 +122,30 @@ export function EditableListDialog<T extends object>({
                 {fields.map((field) => (
                   <div key={field.key} className={fields.length === 1 ? "col-span-2" : undefined}>
                     <Label className="mb-1 block text-xs text-muted-foreground">{field.label}</Label>
-                    <Input
-                      type={field.type === "number" ? "number" : "text"}
-                      placeholder={field.placeholder}
-                      value={((item as Record<string, unknown>)[field.key] as string | number | undefined) ?? ""}
-                      onChange={(e) => updateField(index, field, e.target.value)}
-                    />
+                    {field.type === "select" ? (
+                      <Select
+                        value={((item as Record<string, unknown>)[field.key] as string | undefined) ?? ""}
+                        onValueChange={(value) => updateField(index, field, value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={field.placeholder ?? "Select…"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {field.options?.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        type={field.type === "number" ? "number" : "text"}
+                        placeholder={field.placeholder}
+                        value={((item as Record<string, unknown>)[field.key] as string | number | undefined) ?? ""}
+                        onChange={(e) => updateField(index, field, e.target.value)}
+                      />
+                    )}
                   </div>
                 ))}
               </div>

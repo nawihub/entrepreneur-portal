@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { entrepreneursApi } from "@/lib/api/entrepreneurs";
 import { useOwnEntrepreneurProfile } from "@/lib/queries/entrepreneurs";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { NATIONALITIES } from "@/lib/data/nationalities";
+import { SKILL_GROUPS, SKILLS, skillLabel } from "@/lib/data/skills";
 import { cn } from "@/lib/utils";
 import type { CommonGender, EntrepreneurProfile, UserInfo } from "@/lib/api/types";
 
@@ -89,22 +91,19 @@ function OnboardingForm({ profile, isMissingProfile, user, onDone, onFailed }: O
   const [currentLocation, setCurrentLocation] = useState(profile?.currentLocation ?? "");
   const [chiefdom, setChiefdom] = useState(profile?.chiefdom ?? "");
   const [skills, setSkills] = useState<string[]>(profile?.skills ?? []);
-  const [skillInput, setSkillInput] = useState("");
+  const [skillSearch, setSkillSearch] = useState("");
 
   const canProceedFromBasics = Boolean(gender && dateOfBirth && nationality && district && currentLocation);
 
-  function addSkill() {
-    const value = skillInput.trim();
-    if (value && !skills.includes(value)) setSkills((prev) => [...prev, value]);
-    setSkillInput("");
+  function toggleSkill(value: string) {
+    setSkills((prev) => (prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value]));
   }
 
-  function handleSkillKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addSkill();
-    }
-  }
+  const filteredSkills = useMemo(() => {
+    const query = skillSearch.trim().toLowerCase();
+    if (!query) return SKILLS;
+    return SKILLS.filter((s) => s.label.toLowerCase().includes(query));
+  }, [skillSearch]);
 
   async function handleFinish() {
     setSubmitting(true);
@@ -264,28 +263,49 @@ function OnboardingForm({ profile, isMissingProfile, user, onDone, onFailed }: O
               </div>
               <div className="space-y-1.5">
                 <Label>Skills</Label>
-                <div className="flex flex-wrap gap-2">
-                  {skills.map((skill) => (
-                    <Badge key={skill} variant="outline" className="gap-1 pr-1.5">
-                      {skill}
-                      <button
-                        type="button"
-                        onClick={() => setSkills((prev) => prev.filter((s) => s !== skill))}
-                        aria-label={`Remove ${skill}`}
-                        className="rounded-full p-0.5 hover:bg-muted"
-                      >
-                        <X className="size-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
+                {skills.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {skills.map((value) => (
+                      <Badge key={value} variant="outline" className="gap-1 pr-1.5">
+                        {skillLabel(value)}
+                        <button
+                          type="button"
+                          onClick={() => toggleSkill(value)}
+                          aria-label={`Remove ${skillLabel(value)}`}
+                          className="rounded-full p-0.5 hover:bg-muted"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
                 <Input
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyDown={handleSkillKeyDown}
-                  onBlur={addSkill}
-                  placeholder="Type a skill and press Enter"
+                  value={skillSearch}
+                  onChange={(e) => setSkillSearch(e.target.value)}
+                  placeholder="Search skills…"
                 />
+                <div className="max-h-56 overflow-y-auto rounded-lg border border-border p-1">
+                  {SKILL_GROUPS.map((group) => {
+                    const groupSkills = filteredSkills.filter((s) => s.group === group);
+                    if (groupSkills.length === 0) return null;
+                    return (
+                      <div key={group} className="mb-2 last:mb-0">
+                        <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group}</p>
+                        {groupSkills.map((skill) => (
+                          <label
+                            key={skill.value}
+                            className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm hover:bg-muted"
+                          >
+                            <Checkbox checked={skills.includes(skill.value)} onCheckedChange={() => toggleSkill(skill.value)} />
+                            {skill.label}
+                          </label>
+                        ))}
+                      </div>
+                    );
+                  })}
+                  {filteredSkills.length === 0 && <p className="p-3 text-sm text-muted-foreground">No matching skills.</p>}
+                </div>
               </div>
             </CardContent>
           </>

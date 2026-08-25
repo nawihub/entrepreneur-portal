@@ -33,11 +33,13 @@ import {
 import { ProfileScoreRing } from "@/components/profile/profile-score-ring";
 import { EditableListDialog } from "@/components/profile/editable-list-dialog";
 import { SkillsEditDialog } from "@/components/profile/skills-edit-dialog";
+import { StringListEditDialog } from "@/components/profile/string-list-edit-dialog";
 import { StoryEditDialog } from "@/components/profile/story-edit-dialog";
 import { FundingEditDialog } from "@/components/profile/funding-edit-dialog";
 import { ConnectButton } from "@/components/profile/connect-button";
 import { EmptyState } from "@/components/empty-state";
 import { formatMoney } from "@/lib/format-money";
+import { formatEnumLabel } from "@/lib/utils";
 import { useAuthStore } from "@/lib/store/auth-store";
 import {
   useEntrepreneurJourneys,
@@ -55,6 +57,27 @@ import {
   useVentureMutations,
 } from "@/lib/queries/entrepreneurs";
 import { toast } from "sonner";
+import type { AwardEntry, EducationEntry, MembershipEntry, ReferenceEntry } from "@/lib/api/types";
+
+const EDUCATION_TYPE_OPTIONS = [
+  { value: "FORMAL", label: "Formal" },
+  { value: "PROFESSIONAL_CERT", label: "Professional Certification" },
+  { value: "VOCATIONAL", label: "Vocational" },
+  { value: "ENTREPRENEURSHIP", label: "Entrepreneurship" },
+];
+
+const REFERENCE_TYPE_OPTIONS = [
+  { value: "ACADEMIC", label: "Academic" },
+  { value: "PROFESSIONAL", label: "Professional" },
+  { value: "COMMUNITY", label: "Community" },
+];
+
+const MEMBERSHIP_TYPE_OPTIONS = [
+  { value: "BUSINESS_ASSOC", label: "Business Association" },
+  { value: "PROFESSIONAL_BODY", label: "Professional Body" },
+  { value: "INNOVATION_HUB", label: "Innovation Hub" },
+  { value: "COOPERATIVE", label: "Cooperative" },
+];
 
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -142,10 +165,10 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
           </div>
 
           <div className="flex items-center justify-center gap-2 sm:justify-end">
-            {socialLinks?.github && <SocialLink href={socialLinks.github} icon={GithubGlyph} />}
-            {socialLinks?.linkedin && <SocialLink href={socialLinks.linkedin} icon={LinkedinGlyph} />}
-            {socialLinks?.facebook && <SocialLink href={socialLinks.facebook} icon={FacebookGlyph} />}
-            {socialLinks?.website && <SocialLink href={socialLinks.website} icon={Globe} />}
+            {socialLinks?.githubProfileUrl && <SocialLink href={socialLinks.githubProfileUrl} icon={GithubGlyph} />}
+            {socialLinks?.linkedinUrl && <SocialLink href={socialLinks.linkedinUrl} icon={LinkedinGlyph} />}
+            {socialLinks?.facebookUrl && <SocialLink href={socialLinks.facebookUrl} icon={FacebookGlyph} />}
+            {socialLinks?.websiteUrl && <SocialLink href={socialLinks.websiteUrl} icon={Globe} />}
             {!isOwner && <ConnectButton profileId={profile.id} name={identity.firstName} />}
           </div>
         </CardContent>
@@ -207,13 +230,13 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                     title="Education"
                     items={profile.education}
                     fields={[
+                      { key: "type", label: "Type", type: "select", options: EDUCATION_TYPE_OPTIONS },
                       { key: "institution", label: "Institution" },
-                      { key: "credential", label: "Credential" },
-                      { key: "fieldOfStudy", label: "Field of study" },
+                      { key: "qualification", label: "Qualification" },
                       { key: "startYear", label: "Start year", type: "number" },
                       { key: "endYear", label: "End year", type: "number" },
                     ]}
-                    emptyItem={{ institution: "", credential: "", fieldOfStudy: "", startYear: undefined, endYear: undefined }}
+                    emptyItem={{ type: "FORMAL", institution: "", qualification: "", startYear: 0, endYear: 0 } satisfies EducationEntry}
                     onSave={(items) => updateEducation.mutateAsync(items)}
                   />
                 )
@@ -226,8 +249,8 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                   <>
                     <p className="font-medium">{e.institution}</p>
                     <p className="text-xs text-muted-foreground">
-                      {[e.credential, e.fieldOfStudy].filter(Boolean).join(" · ")}
-                      {e.startYear && ` · ${e.startYear}–${e.endYear ?? "present"}`}
+                      {[formatEnumLabel(e.type), e.qualification].filter(Boolean).join(" · ")}
+                      {Boolean(e.startYear) && ` · ${e.startYear}–${e.endYear || "present"}`}
                     </p>
                   </>
                 )}
@@ -242,12 +265,12 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                     title="Memberships"
                     items={profile.memberships}
                     fields={[
-                      { key: "organization", label: "Organization" },
+                      { key: "type", label: "Type", type: "select", options: MEMBERSHIP_TYPE_OPTIONS },
+                      { key: "orgName", label: "Organization" },
                       { key: "role", label: "Role" },
-                      { key: "startYear", label: "Start year", type: "number" },
-                      { key: "endYear", label: "End year", type: "number" },
+                      { key: "joinedYear", label: "Joined year", type: "number" },
                     ]}
-                    emptyItem={{ organization: "", role: "", startYear: undefined, endYear: undefined }}
+                    emptyItem={{ type: "BUSINESS_ASSOC", orgName: "", role: "", joinedYear: 0 } satisfies MembershipEntry}
                     onSave={(items) => updateMemberships.mutateAsync(items)}
                   />
                 )
@@ -258,8 +281,10 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                 empty="No memberships yet."
                 render={(m) => (
                   <>
-                    <p className="font-medium">{m.organization}</p>
-                    {m.role && <p className="text-xs text-muted-foreground">{m.role}</p>}
+                    <p className="font-medium">{m.orgName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {[formatEnumLabel(m.type), m.role].filter(Boolean).join(" · ")}
+                    </p>
                   </>
                 )}
               />
@@ -277,7 +302,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                       { key: "issuer", label: "Issuer" },
                       { key: "year", label: "Year", type: "number" },
                     ]}
-                    emptyItem={{ title: "", issuer: "", year: undefined }}
+                    emptyItem={{ title: "", issuer: "", year: 0 } satisfies AwardEntry}
                     onSave={(items) => updateAwards.mutateAsync(items)}
                   />
                 )
@@ -303,11 +328,21 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                     title="References"
                     items={profile.references}
                     fields={[
-                      { key: "name", label: "Name" },
-                      { key: "relationship", label: "Relationship" },
-                      { key: "contact", label: "Contact" },
+                      { key: "type", label: "Type", type: "select", options: REFERENCE_TYPE_OPTIONS },
+                      { key: "refereeName", label: "Name" },
+                      { key: "refereeTitle", label: "Title" },
+                      { key: "refereeOrg", label: "Organization" },
+                      { key: "refereeEmail", label: "Email" },
+                      { key: "refereePhone", label: "Phone" },
                     ]}
-                    emptyItem={{ name: "", relationship: "", contact: "" }}
+                    emptyItem={{
+                      type: "PROFESSIONAL",
+                      refereeName: "",
+                      refereeTitle: "",
+                      refereeOrg: "",
+                      refereeEmail: "",
+                      refereePhone: "",
+                    } satisfies ReferenceEntry}
                     onSave={(items) => updateReferences.mutateAsync(items)}
                   />
                 )
@@ -318,8 +353,10 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                 empty="No references yet."
                 render={(r) => (
                   <>
-                    <p className="font-medium">{r.name}</p>
-                    <p className="text-xs text-muted-foreground">{[r.relationship, r.contact].filter(Boolean).join(" · ")}</p>
+                    <p className="font-medium">{r.refereeName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {[formatEnumLabel(r.type), r.refereeTitle, r.refereeOrg].filter(Boolean).join(" · ")}
+                    </p>
                   </>
                 )}
               />
@@ -329,14 +366,10 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
               title="Public links"
               editor={
                 isOwner && (
-                  <EditableListDialog
+                  <StringListEditDialog
                     title="Public links"
                     items={profile.publicLinks}
-                    fields={[
-                      { key: "label", label: "Label" },
-                      { key: "url", label: "URL" },
-                    ]}
-                    emptyItem={{ label: "", url: "" }}
+                    placeholder="https://…"
                     onSave={(items) => updatePublicLinks.mutateAsync(items)}
                   />
                 )
@@ -346,10 +379,10 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                 <p className="text-sm text-muted-foreground">No public links yet.</p>
               ) : (
                 <ul className="flex flex-col gap-1.5">
-                  {profile.publicLinks.map((link, i) => (
-                    <li key={link.id ?? i}>
-                      <a href={link.url} target="_blank" rel="noreferrer" className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-400">
-                        {link.label}
+                  {profile.publicLinks.map((link) => (
+                    <li key={link}>
+                      <a href={link} target="_blank" rel="noreferrer" className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-400">
+                        {link}
                       </a>
                     </li>
                   ))}

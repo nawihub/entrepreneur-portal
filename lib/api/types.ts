@@ -118,18 +118,19 @@ export interface OAuthPayload {
 // onboarding and call POST /{id}/activate.
 export type EntrepreneurStatus = "PENDING" | "ACTIVE" | "SUSPENDED" | "INACTIVE";
 
-// NOTE: socialLinks/story/education/references/memberships/awards/
-// funding/visibility/publicLinks below are NOT yet verified against the
-// real gateway response (EntrepreneurModel.EntrepreneurProfile) - only
-// the top-level identity/contact/status/skills fields have been fixed so
-// far (needed to unblock onboarding + the nav rails). Treat those nested
-// shapes as still-unverified same as everywhere else in this file.
+// NOTE: story/funding/visibility below are still NOT verified against the
+// real gateway response (EntrepreneurModel.EntrepreneurProfile) - identity/
+// contact/status/skills/education/references/memberships/awards/
+// publicLinks/socialLinks have all been fixed. Treat story/funding/
+// visibility as still-unverified same as everywhere else in this file -
+// there's no edit UI for socialLinks yet either (only display), so a wrong
+// shape there was silent rather than a 400.
 export interface SocialLinks {
-  github?: string | null;
-  linkedin?: string | null;
-  facebook?: string | null;
-  x?: string | null;
-  website?: string | null;
+  githubProfileUrl?: string | null;
+  linkedinUrl?: string | null;
+  facebookUrl?: string | null;
+  xUrl?: string | null;
+  websiteUrl?: string | null;
 }
 
 export interface ContactInfo {
@@ -152,43 +153,49 @@ export interface EntrepreneurStory {
   successStory?: string | null;
 }
 
+// Entrepreneur.Education.EducationType - a real backend enum (the gateway
+// parses this exact set via ProtoEnums.parse), not free text.
+export type EducationType = "FORMAL" | "PROFESSIONAL_CERT" | "VOCATIONAL" | "ENTREPRENEURSHIP";
+
 export interface EducationEntry {
-  id?: string;
+  type: EducationType;
   institution: string;
-  credential?: string | null;
-  fieldOfStudy?: string | null;
-  startYear?: number | null;
-  endYear?: number | null;
+  qualification: string;
+  startYear: number;
+  endYear: number;
 }
+
+// Entrepreneur.Reference.ReferenceType - same deal, a real enum.
+export type ReferenceType = "ACADEMIC" | "PROFESSIONAL" | "COMMUNITY";
 
 export interface ReferenceEntry {
-  id?: string;
-  name: string;
-  relationship?: string | null;
-  contact?: string | null;
+  type: ReferenceType;
+  refereeName: string;
+  refereeTitle?: string | null;
+  refereeOrg?: string | null;
+  refereeEmail?: string | null;
+  refereePhone?: string | null;
 }
 
+// Entrepreneur.Membership.MembershipType - same deal, a real enum.
+export type MembershipType = "BUSINESS_ASSOC" | "PROFESSIONAL_BODY" | "INNOVATION_HUB" | "COOPERATIVE";
+
 export interface MembershipEntry {
-  id?: string;
-  organization: string;
+  type: MembershipType;
+  orgName: string;
   role?: string | null;
-  startYear?: number | null;
-  endYear?: number | null;
+  joinedYear: number;
 }
 
 export interface AwardEntry {
-  id?: string;
   title: string;
-  issuer?: string | null;
-  year?: number | null;
+  issuer: string;
+  year: number;
   description?: string | null;
 }
 
-export interface PublicLinkEntry {
-  id?: string;
-  label: string;
-  url: string;
-}
+// publicLinks is a bare string[] on the wire (Entrepreneur.public_links),
+// not a list of {label, url} objects.
 
 export interface FundingInfo {
   received?: Money | null;
@@ -232,7 +239,7 @@ export interface EntrepreneurProfile {
   references: ReferenceEntry[];
   memberships: MembershipEntry[];
   awards: AwardEntry[];
-  publicLinks: PublicLinkEntry[];
+  publicLinks: string[];
   profileScore: number;
   funding?: FundingInfo | null;
   visibility?: SectionVisibility | null;
