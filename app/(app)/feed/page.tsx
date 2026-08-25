@@ -53,7 +53,7 @@ export default function FeedPage() {
 
       <main className="min-w-0">
         <Tabs defaultValue="for-you">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <TabsList>
               <TabsTrigger value="for-you">For you</TabsTrigger>
               <TabsTrigger value="big-ideas">Big Ideas</TabsTrigger>
