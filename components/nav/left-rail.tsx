@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { BadgeCheck, Sparkles, MapPin } from "lucide-react";
+import { BadgeCheck, Sparkles, MapPin, Cake, Globe2, Mail, Phone, Briefcase } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileScoreRing } from "@/components/profile/profile-score-ring";
 import { useOwnEntrepreneurProfile } from "@/lib/queries/entrepreneurs";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { formatEnumLabel } from "@/lib/utils";
+import { skillLabel } from "@/lib/data/skills";
 
 export function LeftRail() {
   const user = useAuthStore((s) => s.user);
@@ -109,6 +112,60 @@ export function LeftRail() {
           Profile strength
           <span className="float-right font-medium text-foreground">{profile.profileScore}%</span>
         </p>
+
+        <div className="w-full space-y-1.5 border-t border-border pt-3 text-left text-xs text-muted-foreground">
+          {profile.gender && (
+            <p className="flex items-center gap-2">
+              <BadgeCheck className="size-3.5 shrink-0" /> {formatEnumLabel(profile.gender)}
+            </p>
+          )}
+          {profile.dateOfBirth && (
+            <p className="flex items-center gap-2">
+              <Cake className="size-3.5 shrink-0" /> {new Date(profile.dateOfBirth).toLocaleDateString()}
+            </p>
+          )}
+          {profile.nationality && (
+            <p className="flex items-center gap-2">
+              <Globe2 className="size-3.5 shrink-0" /> {profile.nationality}
+            </p>
+          )}
+          {(profile.district || profile.chiefdom) && (
+            <p className="flex items-center gap-2">
+              <MapPin className="size-3.5 shrink-0" />
+              {[profile.district, profile.chiefdom].filter(Boolean).join(", ")}
+            </p>
+          )}
+          {profile.contactInfo?.email && (
+            <p className="flex items-center gap-2 truncate">
+              <Mail className="size-3.5 shrink-0" /> <span className="truncate">{profile.contactInfo.email}</span>
+            </p>
+          )}
+          {profile.contactInfo?.phoneNumber && (
+            <p className="flex items-center gap-2">
+              <Phone className="size-3.5 shrink-0" /> {profile.contactInfo.phoneNumber}
+            </p>
+          )}
+        </div>
+
+        {profile.skills.length > 0 && (
+          <div className="w-full border-t border-border pt-3 text-left">
+            <p className="mb-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+              <Briefcase className="size-3.5" /> Skills
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {profile.skills.slice(0, 5).map((skill) => (
+                <Badge key={skill} variant="outline" className="text-[11px]">
+                  {skillLabel(skill)}
+                </Badge>
+              ))}
+              {profile.skills.length > 5 && (
+                <Badge variant="outline" className="text-[11px]">
+                  +{profile.skills.length - 5} more
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

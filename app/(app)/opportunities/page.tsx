@@ -10,7 +10,10 @@ import { OpportunityCard } from "@/components/feed/opportunity-card";
 import { useOpportunitiesFeed } from "@/lib/queries/opportunities";
 
 export default function OpportunitiesPage() {
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useOpportunitiesFeed({ pageSize: 10 });
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useOpportunitiesFeed({
+    pageSize: 10,
+    status: "APPROVED",
+  });
   const items = data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
@@ -30,7 +33,7 @@ export default function OpportunitiesPage() {
       {isLoading ? (
         <div className="flex flex-col gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24" />
+            <Skeleton key={i} className="h-32" />
           ))}
         </div>
       ) : items.length === 0 ? (

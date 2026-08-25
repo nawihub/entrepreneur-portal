@@ -10,7 +10,10 @@ import { BigIdeaCard } from "@/components/feed/big-idea-card";
 import { useBigIdeasFeed } from "@/lib/queries/big-ideas";
 
 export default function BigIdeasPage() {
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useBigIdeasFeed({ pageSize: 10 });
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useBigIdeasFeed({
+    pageSize: 10,
+    status: "APPROVED",
+  });
   const items = data?.pages.flatMap((p) => p.items) ?? [];
 
   return (

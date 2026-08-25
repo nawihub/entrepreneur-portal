@@ -257,6 +257,17 @@
   --spacing-touch-lg: 52px;
   --spacing-touch-xl: 60px;
 
+  /* z-scale: none of these were wired up before, so `z-sticky`/`z-dropdown`/
+     `z-popover`/`z-modal` were unrecognized Tailwind utilities that compiled
+     to no CSS at all - the sticky header, dropdown menu, popovers, selects,
+     and dialogs were all rendering with z-index:auto and stacking purely by
+     DOM order, which is what let feed-page content scroll on top of the nav
+     header. */
+  --z-sticky: 40;
+  --z-dropdown: 45;
+  --z-popover: 50;
+  --z-modal: 60;
+
   --animate-fade-in-up: fadeInUp var(--duration-normal) var(--ease-out) forwards;
   --animate-scale-in: scaleIn var(--duration-normal) var(--ease-spring) forwards;
   --animate-slide-in-bottom: slideInBottom var(--duration-slow) var(--ease-out) forwards;

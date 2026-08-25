@@ -3,7 +3,7 @@
 import { use } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
-import { HandCoins, Clock } from "lucide-react";
+import { HandCoins, Clock, Eye, CheckCircle2, XCircle, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,45 +36,58 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ id
   return (
     <div className="container-page max-w-3xl py-6">
       <Card className="animate-fade-in-up overflow-hidden">
-        {opportunity.flierUrl && (
-          <div className="relative h-56 w-full bg-muted">
+        <div className="relative h-56 w-full bg-gradient-to-br from-secondary-400 to-secondary-600">
+          {opportunity.flierUrl && (
             <Image src={opportunity.flierUrl} alt="" fill className="object-cover" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={opportunity.status} />
+              {opportunity.category && (
+                <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
+                  {opportunity.category}
+                </span>
+              )}
+            </div>
+            <CardTitle className="text-2xl text-white drop-shadow-sm">{opportunity.title}</CardTitle>
           </div>
-        )}
-        <CardHeader>
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <StatusBadge status={opportunity.status} />
-            {opportunity.category && <span className="text-xs text-muted-foreground">{opportunity.category}</span>}
-          </div>
-          <CardTitle className="text-2xl">{opportunity.title}</CardTitle>
-          {opportunity.organization && <p className="text-muted-foreground">{opportunity.organization}</p>}
+        </div>
+        <CardHeader className="pb-0">
+          {opportunity.organization && (
+            <p className="flex items-center gap-1.5 text-muted-foreground">
+              <Building2 className="size-4" /> {opportunity.organization}
+            </p>
+          )}
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-wrap gap-4 text-sm">
+          <div className="flex flex-wrap gap-3">
             {opportunity.amount && (
-              <span className="flex items-center gap-1.5 font-medium">
+              <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm font-medium">
                 <HandCoins className="size-4 text-secondary-500" /> {formatMoney(opportunity.amount)}
               </span>
             )}
             {opportunity.deadline && (
-              <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm text-muted-foreground">
                 <Clock className="size-4" /> Deadline {new Date(opportunity.deadline).toLocaleDateString()}
               </span>
             )}
           </div>
-          {opportunity.description && <p className="text-sm leading-relaxed">{opportunity.description}</p>}
+          {opportunity.description && (
+            <p className="whitespace-pre-line text-sm leading-relaxed">{opportunity.description}</p>
+          )}
 
           {/* TODO(backend): same role-gating caveat as Big Ideas moderation -
               no role field on UserInfo yet to check moderator status. */}
           <div className="flex flex-wrap gap-2 border-t border-border pt-4">
             <Button variant="outline" size="sm" onClick={() => moderation.review.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              Mark in review
+              <Eye className="size-4" /> Mark in review
             </Button>
             <Button size="sm" onClick={() => moderation.approve.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              Approve
+              <CheckCircle2 className="size-4" /> Approve
             </Button>
             <Button variant="destructive" size="sm" onClick={() => moderation.decline.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              Decline
+              <XCircle className="size-4" /> Decline
             </Button>
           </div>
         </CardContent>

@@ -28,8 +28,8 @@ function CardSkeletons() {
 }
 
 export default function FeedPage() {
-  const bigIdeas = useBigIdeasFeed({ pageSize: 6 });
-  const opportunities = useOpportunitiesFeed({ pageSize: 6 });
+  const bigIdeas = useBigIdeasFeed({ pageSize: 6, status: "APPROVED" });
+  const opportunities = useOpportunitiesFeed({ pageSize: 6, status: "APPROVED" });
   const businesses = useBusinessesFeed({ pageSize: 6 });
 
   const ideaItems = bigIdeas.data?.pages.flatMap((p) => p.items) ?? [];
@@ -44,9 +44,9 @@ export default function FeedPage() {
   const forYou = interleave([ideaItems.slice(0, 4), oppItems.slice(0, 4), bizItems.slice(0, 4)]);
 
   return (
-    <div className="container-page grid grid-cols-1 gap-6 py-6 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)_280px]">
-      <aside className="hidden lg:block">
-        <div className="sticky top-20">
+    <div className="container-page grid grid-cols-1 gap-6 py-6 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] xl:grid-cols-[minmax(0,260px)_minmax(0,1fr)_minmax(0,280px)]">
+      <aside className="hidden min-w-0 lg:block">
+        <div className="sticky top-20 isolate z-0">
           <LeftRail />
         </div>
       </aside>
@@ -123,7 +123,7 @@ export default function FeedPage() {
             {businesses.isLoading ? (
               <CardSkeletons />
             ) : bizItems.length === 0 ? (
-              <EmptyState icon={Building2} title="No businesses listed yet" description="Registered businesses will show up here." />
+              <EmptyState icon={Building2} title="No businesses yet" description="Businesses you register will show up here." />
             ) : (
               bizItems.map((biz) => <BusinessCard key={biz.id} business={biz} />)
             )}
@@ -136,8 +136,8 @@ export default function FeedPage() {
         </Tabs>
       </main>
 
-      <aside className="hidden xl:block">
-        <div className="sticky top-20">
+      <aside className="hidden min-w-0 xl:block">
+        <div className="sticky top-20 isolate z-0">
           <RightRail />
         </div>
       </aside>

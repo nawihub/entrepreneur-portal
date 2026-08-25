@@ -3,12 +3,13 @@
 import { use, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Paperclip, Trash2, Lightbulb } from "lucide-react";
+import { Paperclip, Trash2, Lightbulb, Eye, CheckCircle2, XCircle, MapPin, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
 import { formatEnumLabel } from "@/lib/utils";
 import { useBigIdea, useBigIdeaModeration, useDeleteBigIdea } from "@/lib/queries/big-ideas";
@@ -71,15 +72,19 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="container-page max-w-3xl py-6">
-      <Card className="animate-fade-in-up">
-        <CardHeader className="flex-row items-start justify-between space-y-0">
+      <Card className="animate-fade-in-up overflow-hidden">
+        <div className="relative h-32 w-full bg-gradient-to-br from-primary-400 to-primary-600">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Lightbulb className="size-10 text-white/90" />
+          </div>
+        </div>
+        <CardHeader className="flex-row items-start justify-between space-y-0 pb-0">
           <div>
-            <div className="mb-2 flex items-center gap-2">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
               <StatusBadge status={idea.status} />
-              <span className="text-xs text-muted-foreground">{formatEnumLabel(idea.stage)}</span>
-              <span className="text-xs text-muted-foreground">
-                · {formatEnumLabel(idea.applicant.submissionType)}
-              </span>
+              <Badge variant="secondary" className="text-[11px] uppercase tracking-wide">
+                {formatEnumLabel(idea.stage)}
+              </Badge>
             </div>
             <CardTitle className="text-2xl">{idea.ideaName}</CardTitle>
           </div>
@@ -100,19 +105,35 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
           </Button>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-3 rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <User className="size-3.5" /> {idea.applicant.fullName}
+            </span>
+            {idea.applicant.location && (
+              <span className="flex items-center gap-1.5">
+                <MapPin className="size-3.5" /> {idea.applicant.location}
+              </span>
+            )}
+            <span className="rounded-full bg-background px-2 py-0.5 text-xs">
+              {formatEnumLabel(idea.applicant.submissionType)}
+            </span>
+          </div>
+
           <p className="text-base font-medium leading-relaxed">{idea.oneLineDescription}</p>
           <p className="text-sm leading-relaxed text-muted-foreground">{idea.description}</p>
 
-          {DETAIL_SECTIONS.map(({ label, key }) => {
-            const value = idea[key];
-            if (!value) return null;
-            return (
-              <div key={key}>
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-                <p className="text-sm">{String(value)}</p>
-              </div>
-            );
-          })}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {DETAIL_SECTIONS.map(({ label, key }) => {
+              const value = idea[key];
+              if (!value) return null;
+              return (
+                <div key={key} className="rounded-lg border border-border p-3">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+                  <p className="text-sm leading-relaxed">{String(value)}</p>
+                </div>
+              );
+            })}
+          </div>
 
           {idea.status === "DECLINED" && idea.declineReason && (
             <div className="rounded-lg bg-error/10 p-3 text-sm text-error">
@@ -133,8 +154,9 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
                       href={material.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-sm text-primary-600 hover:underline dark:text-primary-400"
+                      className="flex items-center gap-1.5 text-sm text-primary-600 hover:underline dark:text-primary-400"
                     >
+                      <Paperclip className="size-3.5" />
                       {formatEnumLabel(material.type)} — {material.url.split("/").pop()}
                     </a>
                   </li>
@@ -178,13 +200,13 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
               needs a reason-prompt UI + a field-name fix before it'll work. */}
           <div className="flex flex-wrap gap-2 border-t border-border pt-4">
             <Button variant="outline" size="sm" onClick={() => moderation.review.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              Mark in review
+              <Eye className="size-4" /> Mark in review
             </Button>
             <Button size="sm" onClick={() => moderation.approve.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              Approve
+              <CheckCircle2 className="size-4" /> Approve
             </Button>
             <Button variant="destructive" size="sm" onClick={() => moderation.decline.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              Decline
+              <XCircle className="size-4" /> Decline
             </Button>
           </div>
         </CardContent>

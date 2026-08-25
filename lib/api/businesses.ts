@@ -9,8 +9,12 @@ export const businessesApi = {
   getByTrackingId: (trackingId: string) =>
     api.get<Business>(`${BASE}/by-tracking-id/${trackingId}`),
 
+  // /mine (not the bare list endpoint) - the businesses shown in-app are the
+  // signed-in user's own registrations, not a public directory; the gateway
+  // scopes ownership server-side off the bearer token, not a client-supplied
+  // ownerId.
   list: (params?: PageParams & { status?: string }) =>
-    api.get<Page<Business>>(BASE, { query: params }),
+    api.get<Page<Business>>(`${BASE}/mine`, { query: params }),
 
   register: (meta: BusinessMeta, idScan: File) => {
     const form = new FormData();

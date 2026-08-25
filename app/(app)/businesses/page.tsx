@@ -17,8 +17,8 @@ export default function BusinessesPage() {
     <div className="container-page py-6">
       <div className="mb-6 flex items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-semibold">Business directory</h1>
-          <p className="text-muted-foreground">Registered businesses across the NaWeHub network.</p>
+          <h1 className="font-display text-2xl font-semibold">My businesses</h1>
+          <p className="text-muted-foreground">Businesses you&apos;ve registered on NaWeHub.</p>
         </div>
         <Button asChild>
           <Link href="/businesses/new">
@@ -34,7 +34,11 @@ export default function BusinessesPage() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <EmptyState icon={Building2} title="No businesses listed yet" />
+        <EmptyState
+          icon={Building2}
+          title="No businesses yet"
+          description="Register your first business to get started."
+        />
       ) : (
         <div className="flex flex-col gap-4">
           {items.map((biz) => (
