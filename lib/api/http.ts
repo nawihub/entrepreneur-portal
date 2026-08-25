@@ -102,12 +102,25 @@ async function request<T>(
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(buildUrl(path, query), {
-    method,
-    headers,
-    body: payload,
-    signal,
-  });
+  // Every call gets a default timeout so a hung backend/network/service-worker
+  // never leaves a caller's isLoading stuck true forever - a real request that
+  // times out here still rejects and settles the query, just as an error
+  // instead of an infinite spinner. Callers that pass their own `signal`
+  // (e.g. to cancel on unmount) keep full control instead.
+  let res: Response;
+  try {
+    res = await fetch(buildUrl(path, query), {
+      method,
+      headers,
+      body: payload,
+      signal: signal ?? AbortSignal.timeout(15_000),
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "TimeoutError") {
+      throw new ApiError(0, null, `Request to ${path} timed out`);
+    }
+    throw err;
+  }
 
   if (res.status === 401 && auth && !isRetry) {
     const newToken = await refreshAccessToken();
