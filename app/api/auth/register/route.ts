@@ -12,5 +12,5 @@ export async function POST(request: Request) {
   // Some auth flows require email verification before a session is issued -
   // respondWithSession already degrades gracefully to a token-less
   // {user, ...} body when the gateway doesn't include accessToken/refreshToken.
-  return respondWithSession(data ?? {}, res.status);
+  return await respondWithSession(data ?? {}, res.status);
 }

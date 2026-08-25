@@ -4,14 +4,21 @@ import { env } from "@/lib/env";
 /**
  * BFF-lite token relay.
  *
- * web-api-gateway hands back {accessToken, refreshToken, user} in the JSON
- * body for every session-issuing call. Client-side JS never sees the
- * refresh token: these route handlers are the only code that reads/writes
- * it, storing it as an httpOnly cookie so an XSS bug in the SPA can't
- * exfiltrate a 7-day credential. The short-lived (~15 min) access token IS
- * returned to the client JSON body, to be kept in memory only (see
- * lib/store/auth-store.ts) - losing it on a hard refresh is fine, since
- * that just triggers one silent-refresh round trip.
+ * web-api-gateway's session-issuing calls (login/oauth/refresh) hand back
+ * {accessToken, refreshToken, expiresIn, userId} - a bare userId, NOT a full
+ * user object (see AuthModel.AuthDetail on the gateway). respondWithSession
+ * fetches the real UserInfo itself via GET /api/v1/auth/self before ever
+ * responding to the client, so the client always gets a genuine {accessToken,
+ * user} pair - callers that assumed the gateway body already had a `user`
+ * field ended up calling setSession(token, undefined), authenticating the
+ * session while leaving the store's `user` permanently null.
+ *
+ * Client-side JS never sees the refresh token: these route handlers are the
+ * only code that reads/writes it, storing it as an httpOnly cookie so an XSS
+ * bug in the SPA can't exfiltrate a 7-day credential. The short-lived
+ * (~15 min) access token IS returned to the client JSON body, to be kept in
+ * memory only (see lib/store/auth-store.ts) - losing it on a hard refresh is
+ * fine, since that just triggers one silent-refresh round trip.
  */
 
 export const REFRESH_COOKIE = "nwh_refresh_token";
@@ -45,9 +52,20 @@ export async function callGatewayWithCookieToken(
   return callGateway(path, { refreshToken, ...extraBody });
 }
 
+/** Fetches the caller's own UserInfo using a just-issued access token - the
+ * gateway's login/oauth/refresh responses only carry a bare userId, not a
+ * full user object, so this is the only way to get one. */
+async function fetchSelf(accessToken: string) {
+  const res = await fetch(`${env.apiBaseUrl}/api/v1/auth/self`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) return null;
+  return res.json().catch(() => null);
+}
+
 /** Build the client-facing response: strip the refresh token out of the
  * body, set it as an httpOnly cookie instead. */
-export function respondWithSession(data: GatewaySession, status = 200) {
+export async function respondWithSession(data: GatewaySession, status = 200) {
   const { accessToken, refreshToken, user, ...rest } = data;
 
   if (!accessToken || !refreshToken) {
@@ -56,7 +74,8 @@ export function respondWithSession(data: GatewaySession, status = 200) {
     return NextResponse.json({ user, ...rest }, { status });
   }
 
-  const response = NextResponse.json({ accessToken, user, ...rest }, { status });
+  const resolvedUser = user ?? (await fetchSelf(accessToken));
+  const response = NextResponse.json({ accessToken, user: resolvedUser, ...rest }, { status });
   response.cookies.set(REFRESH_COOKIE, refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

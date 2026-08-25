@@ -9,5 +9,5 @@ export async function POST(request: Request) {
       (data as { message?: string } | null)?.message ?? "OAuth sign-in failed",
     );
   }
-  return respondWithSession(data ?? {}, res.status);
+  return await respondWithSession(data ?? {}, res.status);
 }

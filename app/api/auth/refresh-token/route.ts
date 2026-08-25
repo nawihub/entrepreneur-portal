@@ -28,5 +28,5 @@ export async function POST() {
     );
   }
 
-  return respondWithSession(data ?? {}, res.status);
+  return await respondWithSession(data ?? {}, res.status);
 }
