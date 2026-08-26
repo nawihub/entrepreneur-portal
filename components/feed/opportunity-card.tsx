@@ -3,8 +3,7 @@ import Image from "next/image";
 import { HandCoins, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
-import { formatMoney } from "@/lib/format-money";
-import { cn } from "@/lib/utils";
+import { cn, formatEnumLabel } from "@/lib/utils";
 import type { Opportunity } from "@/lib/api/types";
 
 function daysUntil(deadline: string) {
@@ -15,6 +14,7 @@ function daysUntil(deadline: string) {
 export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
   const daysLeft = opportunity.deadline ? daysUntil(opportunity.deadline) : null;
   const isUrgent = daysLeft !== null && daysLeft >= 0 && daysLeft <= 7;
+  const category = opportunity.categories[0];
 
   return (
     <Card className="card-interactive animate-fade-in-up overflow-hidden">
@@ -35,7 +35,12 @@ export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
         <CardContent className="min-w-0 flex-1 space-y-1.5 p-0">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-secondary-600 dark:text-secondary-400">
-              {opportunity.category ?? "Opportunity"}
+              {category === "OTHER" && opportunity.categoryOther
+                ? opportunity.categoryOther
+                : category
+                  ? formatEnumLabel(category)
+                  : "Opportunity"}
+              {opportunity.categories.length > 1 && ` +${opportunity.categories.length - 1}`}
             </span>
             <StatusBadge status={opportunity.status} />
           </div>
@@ -45,13 +50,10 @@ export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
           >
             {opportunity.title}
           </Link>
-          {opportunity.organization && (
-            <p className="truncate text-sm text-muted-foreground">{opportunity.organization}</p>
+          {opportunity.organizationName && (
+            <p className="truncate text-sm text-muted-foreground">{opportunity.organizationName}</p>
           )}
           <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-muted-foreground">
-            {opportunity.amount && (
-              <span className="font-medium text-foreground">{formatMoney(opportunity.amount)}</span>
-            )}
             {opportunity.deadline && (
               <span className={cn("flex items-center gap-1", isUrgent && "font-medium text-error")}>
                 <Clock className="size-3" />

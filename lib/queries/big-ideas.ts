@@ -41,15 +41,3 @@ export function useDeleteBigIdea() {
   });
 }
 
-export function useBigIdeaModeration(id: string) {
-  const queryClient = useQueryClient();
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: bigIdeaKeys.detail(id) }).then();
-    queryClient.invalidateQueries({ queryKey: bigIdeaKeys.all }).then();
-  };
-  return {
-    review: useMutation({ mutationFn: (note?: string) => bigIdeasApi.review(id, note), onSuccess: invalidate }),
-    approve: useMutation({ mutationFn: (note?: string) => bigIdeasApi.approve(id, note), onSuccess: invalidate }),
-    decline: useMutation({ mutationFn: (note?: string) => bigIdeasApi.decline(id, note), onSuccess: invalidate }),
-  };
-}

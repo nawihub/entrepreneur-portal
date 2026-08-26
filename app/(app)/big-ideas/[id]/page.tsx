@@ -3,7 +3,7 @@
 import { use, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Paperclip, Trash2, Lightbulb, Eye, CheckCircle2, XCircle, MapPin, User } from "lucide-react";
+import { Paperclip, Trash2, Lightbulb, MapPin, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,7 +12,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
 import { formatEnumLabel } from "@/lib/utils";
-import { useBigIdea, useBigIdeaModeration, useDeleteBigIdea } from "@/lib/queries/big-ideas";
+import { useBigIdea, useDeleteBigIdea } from "@/lib/queries/big-ideas";
 import { bigIdeasApi } from "@/lib/api/big-ideas";
 import { useQueryClient } from "@tanstack/react-query";
 import { bigIdeaKeys } from "@/lib/queries/big-ideas";
@@ -39,7 +39,6 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: idea, isLoading, isError } = useBigIdea(id);
-  const moderation = useBigIdeaModeration(id);
   const deleteMutation = useDeleteBigIdea();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [materialType, setMaterialType] = useState<MaterialType>("OTHER");
@@ -188,26 +187,6 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
                 <Paperclip className="size-4" /> Attach file
               </Button>
             </div>
-          </div>
-
-          {/* TODO(backend): UserInfo has no role field in the API catalog, so
-              there's no way to check "is this viewer actually a moderator"
-              client-side yet. These actions are left visible to any logged-in
-              user rather than hidden behind a guess at a role system - gate
-              this properly once the gateway exposes roles/permissions. Also
-              note: moderation.decline sends { note } but the backend's
-              DeclineIdeaDto requires a non-blank `reason` field - this action
-              needs a reason-prompt UI + a field-name fix before it'll work. */}
-          <div className="flex flex-wrap gap-2 border-t border-border pt-4">
-            <Button variant="outline" size="sm" onClick={() => moderation.review.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              <Eye className="size-4" /> Mark in review
-            </Button>
-            <Button size="sm" onClick={() => moderation.approve.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              <CheckCircle2 className="size-4" /> Approve
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => moderation.decline.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              <XCircle className="size-4" /> Decline
-            </Button>
           </div>
         </CardContent>
       </Card>

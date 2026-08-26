@@ -2,20 +2,18 @@
 
 import { use } from "react";
 import Image from "next/image";
-import { toast } from "sonner";
-import { HandCoins, Clock, Eye, CheckCircle2, XCircle, Building2 } from "lucide-react";
+import { HandCoins, Clock, Building2, Mail, Phone, Globe2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
-import { formatMoney } from "@/lib/format-money";
-import { useOpportunity, useOpportunityModeration } from "@/lib/queries/opportunities";
+import { formatEnumLabel } from "@/lib/utils";
+import { useOpportunity } from "@/lib/queries/opportunities";
 
 export default function OpportunityDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: opportunity, isLoading, isError } = useOpportunity(id);
-  const moderation = useOpportunityModeration(id);
 
   if (isLoading) {
     return (
@@ -44,52 +42,88 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ id
           <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={opportunity.status} />
-              {opportunity.category && (
-                <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-                  {opportunity.category}
+              {opportunity.categories.map((category) => (
+                <span
+                  key={category}
+                  className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm"
+                >
+                  {category === "OTHER" && opportunity.categoryOther
+                    ? opportunity.categoryOther
+                    : formatEnumLabel(category)}
                 </span>
-              )}
+              ))}
             </div>
             <CardTitle className="text-2xl text-white drop-shadow-sm">{opportunity.title}</CardTitle>
           </div>
         </div>
         <CardHeader className="pb-0">
-          {opportunity.organization && (
+          {opportunity.organizationName && (
             <p className="flex items-center gap-1.5 text-muted-foreground">
-              <Building2 className="size-4" /> {opportunity.organization}
+              <Building2 className="size-4" /> {opportunity.organizationName}
             </p>
           )}
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-3">
-            {opportunity.amount && (
-              <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm font-medium">
-                <HandCoins className="size-4 text-secondary-500" /> {formatMoney(opportunity.amount)}
-              </span>
-            )}
             {opportunity.deadline && (
               <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm text-muted-foreground">
                 <Clock className="size-4" /> Deadline {new Date(opportunity.deadline).toLocaleDateString()}
               </span>
             )}
+            {opportunity.geographicScope && (
+              <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm text-muted-foreground">
+                <Globe2 className="size-4" />
+                {opportunity.geographicScope === "OTHER" && opportunity.geographicScopeOther
+                  ? opportunity.geographicScopeOther
+                  : formatEnumLabel(opportunity.geographicScope)}
+              </span>
+            )}
           </div>
+
           {opportunity.description && (
             <p className="whitespace-pre-line text-sm leading-relaxed">{opportunity.description}</p>
           )}
 
-          {/* TODO(backend): same role-gating caveat as Big Ideas moderation -
-              no role field on UserInfo yet to check moderator status. */}
-          <div className="flex flex-wrap gap-2 border-t border-border pt-4">
-            <Button variant="outline" size="sm" onClick={() => moderation.review.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              <Eye className="size-4" /> Mark in review
-            </Button>
-            <Button size="sm" onClick={() => moderation.approve.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              <CheckCircle2 className="size-4" /> Approve
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => moderation.decline.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              <XCircle className="size-4" /> Decline
-            </Button>
-          </div>
+          {opportunity.eligibilityCriteria && (
+            <div className="rounded-lg border border-border p-3">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Eligibility
+              </p>
+              <p className="text-sm leading-relaxed">{opportunity.eligibilityCriteria}</p>
+            </div>
+          )}
+
+          {(opportunity.contactInfo?.email || opportunity.contactInfo?.phone) && (
+            <div className="flex flex-wrap items-center gap-4 rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+              {opportunity.contactInfo.email && (
+                <span className="flex items-center gap-1.5">
+                  <Mail className="size-3.5" /> {opportunity.contactInfo.email}
+                </span>
+              )}
+              {opportunity.contactInfo.phone && (
+                <span className="flex items-center gap-1.5">
+                  <Phone className="size-3.5" /> {opportunity.contactInfo.phone}
+                </span>
+              )}
+            </div>
+          )}
+
+          {opportunity.status === "DECLINED" && opportunity.declineReason && (
+            <div className="rounded-lg bg-error/10 p-3 text-sm text-error">
+              <p className="mb-1 font-medium">Decline reason</p>
+              <p>{opportunity.declineReason}</p>
+            </div>
+          )}
+
+          {opportunity.applicationLink && (
+            <div className="border-t border-border pt-4">
+              <Button asChild className="w-fit">
+                <a href={opportunity.applicationLink} target="_blank" rel="noreferrer">
+                  <ExternalLink className="size-4" /> Register / apply
+                </a>
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

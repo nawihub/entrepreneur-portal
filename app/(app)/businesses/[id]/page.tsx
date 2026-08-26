@@ -2,13 +2,13 @@
 
 import { use, useState } from "react";
 import { toast } from "sonner";
-import { Building2, CreditCard, MapPin, User, Eye, Wallet, CheckCircle2, ShieldCheck, XCircle } from "lucide-react";
+import { Building2, CreditCard, MapPin, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
-import { useBusiness, useBusinessLifecycle } from "@/lib/queries/businesses";
+import { useBusiness } from "@/lib/queries/businesses";
 import { startCheckout } from "@/lib/api/payments";
 import { env } from "@/lib/env";
 import { formatEnumLabel } from "@/lib/utils";
@@ -16,7 +16,6 @@ import { formatEnumLabel } from "@/lib/utils";
 export default function BusinessDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: business, isLoading, isError } = useBusiness(id);
-  const lifecycle = useBusinessLifecycle(id);
   const [checkingOut, setCheckingOut] = useState(false);
 
   if (isLoading) {
@@ -102,26 +101,6 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
               <CreditCard className="size-4" /> {checkingOut ? "Redirecting…" : "Pay registration fee"}
             </Button>
           )}
-
-          {/* TODO(backend): same role-gating caveat as Big Ideas/Opportunities
-              moderation actions - no role field on UserInfo yet. */}
-          <div className="flex flex-wrap gap-2 border-t border-border pt-4">
-            <Button variant="outline" size="sm" onClick={() => lifecycle.markInReview.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              <Eye className="size-4" /> Mark in review
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => lifecycle.requestPayment.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              <Wallet className="size-4" /> Request payment
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => lifecycle.confirmPayment.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              <CheckCircle2 className="size-4" /> Confirm payment
-            </Button>
-            <Button size="sm" onClick={() => lifecycle.approve.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              <ShieldCheck className="size-4" /> Approve
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => lifecycle.reject.mutate(undefined, { onError: () => toast.error("Failed") })}>
-              <XCircle className="size-4" /> Reject
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>

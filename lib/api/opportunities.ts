@@ -41,10 +41,7 @@ export const opportunitiesApi = {
 
   remove: (id: string) => api.delete<void>(`${BASE}/${id}`),
 
-  review: (id: string, note?: string) =>
-    api.post<Opportunity>(`${BASE}/${id}/review`, { note }),
-  approve: (id: string, note?: string) =>
-    api.post<Opportunity>(`${BASE}/${id}/approve`, { note }),
-  decline: (id: string, note?: string) =>
-    api.post<Opportunity>(`${BASE}/${id}/decline`, { note }),
+  // review/approve/decline are deliberately not exposed here - they're
+  // admin-only moderation RPCs, not something an entrepreneur-facing app
+  // should be able to call.
 };

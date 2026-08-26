@@ -60,13 +60,7 @@ export const bigIdeasApi = {
 
   remove: (id: string) => api.delete<void>(`${BASE}/${id}`),
 
-  // Moderator-only lifecycle actions. The catalog doesn't expose a role on
-  // UserInfo, so there's no client-side way to gate these on "am I actually
-  // a moderator" yet - see TODO in app/(app)/big-ideas/[id]/page.tsx.
-  review: (id: string, note?: string) =>
-    api.post<BigIdea>(`${BASE}/${id}/review`, { note }),
-  approve: (id: string, note?: string) =>
-    api.post<BigIdea>(`${BASE}/${id}/approve`, { note }),
-  decline: (id: string, note?: string) =>
-    api.post<BigIdea>(`${BASE}/${id}/decline`, { note }),
+  // review/approve/decline are deliberately not exposed here - they're
+  // admin-only moderation RPCs, not something an entrepreneur-facing app
+  // should be able to call.
 };

@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { opportunitiesApi } from "@/lib/api/opportunities";
 
 export const opportunityKeys = {
@@ -33,15 +33,3 @@ export function useOpportunityAnalysis() {
   });
 }
 
-export function useOpportunityModeration(id: string) {
-  const queryClient = useQueryClient();
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: opportunityKeys.detail(id) }).then();
-    queryClient.invalidateQueries({ queryKey: opportunityKeys.all }).then();
-  };
-  return {
-    review: useMutation({ mutationFn: (note?: string) => opportunitiesApi.review(id, note), onSuccess: invalidate }),
-    approve: useMutation({ mutationFn: (note?: string) => opportunitiesApi.approve(id, note), onSuccess: invalidate }),
-    decline: useMutation({ mutationFn: (note?: string) => opportunitiesApi.decline(id, note), onSuccess: invalidate }),
-  };
-}

@@ -26,13 +26,7 @@ export const businessesApi = {
     return api.upload<Business>(BASE, form);
   },
 
-  markInReview: (id: string) =>
-    api.post<Business>(`${BASE}/${id}/mark-in-review`),
-  requestPayment: (id: string) =>
-    api.post<Business>(`${BASE}/${id}/request-payment`),
-  confirmPayment: (id: string) =>
-    api.post<Business>(`${BASE}/${id}/confirm-payment`),
-  approve: (id: string) => api.post<Business>(`${BASE}/${id}/approve`),
-  reject: (id: string, reason?: string) =>
-    api.post<Business>(`${BASE}/${id}/reject`, { reason }),
+  // mark-in-review/request-payment/confirm-payment/approve/reject are
+  // deliberately not exposed here - they're admin-only lifecycle RPCs, not
+  // something an entrepreneur-facing app should be able to call.
 };

@@ -35,17 +35,3 @@ export function useRegisterBusiness() {
   });
 }
 
-export function useBusinessLifecycle(id: string) {
-  const queryClient = useQueryClient();
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: businessKeys.detail(id) }).then();
-    queryClient.invalidateQueries({ queryKey: businessKeys.all }).then();
-  };
-  return {
-    markInReview: useMutation({ mutationFn: () => businessesApi.markInReview(id), onSuccess: invalidate }),
-    requestPayment: useMutation({ mutationFn: () => businessesApi.requestPayment(id), onSuccess: invalidate }),
-    confirmPayment: useMutation({ mutationFn: () => businessesApi.confirmPayment(id), onSuccess: invalidate }),
-    approve: useMutation({ mutationFn: () => businessesApi.approve(id), onSuccess: invalidate }),
-    reject: useMutation({ mutationFn: (reason?: string) => businessesApi.reject(id, reason), onSuccess: invalidate }),
-  };
-}

@@ -454,21 +454,40 @@ export interface BusinessMeta {
 // ---------------------------------------------------------------------------
 
 export type OpportunityStatus =
-  | "SUBMITTED"
+  | "PENDING"
   | "IN_REVIEW"
   | "APPROVED"
   | "DECLINED";
 
+export interface OpportunityContactInfo {
+  email: string;
+  phone: string;
+  additionalContact?: string | null;
+}
+
+// Mirrors OpportunityModel.OpportunitySummary on the gateway - opportunities
+// have no monetary "amount" field on the wire (that was a made-up field);
+// categories/organizationTypes/targetBeneficiaries are all repeated enums.
 export interface Opportunity {
   id: string;
   title: string;
-  organization?: string | null;
-  category?: string | null;
-  description?: string | null;
-  amount?: Money | null;
+  categories: string[];
+  categoryOther?: string | null;
+  description: string;
+  organizationName: string;
+  organizationTypes: string[];
+  organizationTypeOther?: string | null;
+  targetBeneficiaries: string[];
+  targetBeneficiaryOther?: string | null;
+  eligibilityCriteria?: string | null;
   deadline?: string | null;
+  applicationLink: string;
+  contactInfo: OpportunityContactInfo;
+  geographicScope?: string | null;
+  geographicScopeOther?: string | null;
   flierUrl?: string | null;
   status: OpportunityStatus;
+  declineReason?: string | null;
   createTime: string;
   updateTime: string;
 }
