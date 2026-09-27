@@ -42,7 +42,6 @@ function OpportunitiesContent() {
   const { values, update, clear, activeCount } = useUrlFilters(FILTERS);
   const feed = useOpportunitiesFeed({
     pageSize: 10,
-    status: "APPROVED",
     searchQuery: values.q || undefined,
     categories: values.categories,
     targetBeneficiaries: values.for,

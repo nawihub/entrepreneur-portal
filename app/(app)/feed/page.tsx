@@ -29,7 +29,7 @@ function CardSkeletons() {
 
 export default function FeedPage() {
   const bigIdeas = useBigIdeasFeed({ pageSize: 6 });
-  const opportunities = useOpportunitiesFeed({ pageSize: 6, status: "APPROVED" });
+  const opportunities = useOpportunitiesFeed({ pageSize: 6 });
   const businesses = useBusinessesFeed({ pageSize: 6 });
 
   const ideaItems = bigIdeas.data?.pages.flatMap((p) => p.items) ?? [];

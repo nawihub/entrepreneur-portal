@@ -29,8 +29,8 @@ export interface CreateOpportunityPayload {
 export const opportunitiesApi = {
   get: (id: string) => api.get<Opportunity>(`${BASE}/${id}`),
 
-  // searchQuery matches title and organization name.
-  list: (params?: PageParams & OpportunityFilters & { status?: string }) =>
+  // searchQuery matches title and organization name. The gateway only returns approved opportunities.
+  list: (params?: PageParams & OpportunityFilters) =>
     api.get<Page<Opportunity>>(BASE, { query: params }),
 
   // Backend returns a bare array, not an object wrapper - see CategoryAnalysisSummary.
