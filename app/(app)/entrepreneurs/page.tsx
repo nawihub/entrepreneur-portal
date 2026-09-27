@@ -65,11 +65,16 @@ function DirectoryContent() {
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((entrepreneur) => (
-              <Link key={entrepreneur.id} href={`/profile/${entrepreneur.id}`}>
-                <Card className="card-interactive h-full animate-fade-in-up">
+            {items.map((entrepreneur, index) => (
+              <Link
+                key={entrepreneur.id}
+                href={`/profile/${entrepreneur.id}`}
+                className="group stagger-in"
+                style={{ "--stagger": index } as React.CSSProperties}
+              >
+                <Card className="card-interactive h-full">
                   <CardContent className="flex flex-col items-center gap-2 pt-6 text-center">
-                    <Avatar className="size-16">
+                    <Avatar className="size-16 ring-2 ring-transparent transition-all duration-slow ease-spring group-hover:scale-110 group-hover:ring-primary-400/60">
                       <AvatarImage src={resolveMediaUrl(entrepreneur.profilePhotoUrl) ?? undefined} />
                       <AvatarFallback>{entrepreneur.firstName?.[0]}</AvatarFallback>
                     </Avatar>

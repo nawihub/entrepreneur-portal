@@ -100,12 +100,13 @@ export function TopNav() {
                 size="sm"
                 asChild
                 className={cn(
-                  "relative h-auto flex-col gap-0.5 px-3 py-1.5 text-muted-foreground",
-                  active && "text-primary-700 after:absolute after:inset-x-3 after:-bottom-[9px] after:h-0.5 after:rounded-full after:bg-primary-500 dark:text-primary-300",
+                  "group/nav relative h-auto flex-col gap-0.5 px-3 py-1.5 text-muted-foreground",
+                  "after:absolute after:inset-x-3 after:-bottom-[9px] after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-primary-500 after:transition-transform after:duration-slow after:ease-spring",
+                  active && "text-primary-700 after:scale-x-100 dark:text-primary-300",
                 )}
               >
                 <Link href={item.href} aria-current={active ? "page" : undefined}>
-                  <item.icon className="size-5" />
+                  <item.icon className="size-5 transition-transform duration-normal ease-spring group-hover/nav:-translate-y-0.5 group-hover/nav:scale-110" />
                   <span className="text-[11px] font-medium">{item.label}</span>
                 </Link>
               </Button>
@@ -189,11 +190,11 @@ export function TopNav() {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-2 py-1.5 text-muted-foreground",
+                "flex flex-col items-center gap-0.5 px-2 py-1.5 text-muted-foreground transition-colors active:scale-95",
                 active && "text-primary-700 dark:text-primary-300",
               )}
             >
-              <item.icon className="size-5" />
+              <item.icon className={cn("size-5 transition-transform duration-slow ease-spring", active && "-translate-y-0.5 scale-110")} />
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );

@@ -28,9 +28,9 @@ export function ListResults<T>({ query, renderItem, getKey, empty, isFiltered, o
   if (query.isLoading) {
     return (
       <div className={containerClass} aria-busy="true" aria-label="Loading">
-        {Array.from({ length: layout === "grid" ? 6 : 4 }).map((_, i) => (
-          <Skeleton key={i} className={layout === "grid" ? "h-72" : "h-32"} />
-        ))}
+        {Array.from({ length: layout === "grid" ? 6 : 4 }).map((_, i) =>
+          layout === "grid" ? <TileSkeleton key={i} index={i} /> : <Skeleton key={i} className="h-32" />,
+        )}
       </div>
     );
   }
@@ -50,7 +50,9 @@ export function ListResults<T>({ query, renderItem, getKey, empty, isFiltered, o
     );
   }
 
-  const items = query.data?.pages.flatMap((p) => p.items) ?? [];
+  // Each item remembers its position within the page it arrived in, so a freshly loaded
+  // page staggers in on its own instead of waiting behind everything already shown.
+  const items = query.data?.pages.flatMap((p) => p.items.map((item, index) => ({ item, index }))) ?? [];
 
   if (items.length === 0) {
     return isFiltered ? (
@@ -74,8 +76,8 @@ export function ListResults<T>({ query, renderItem, getKey, empty, isFiltered, o
   return (
     <>
       <div className={cn(containerClass, query.isFetching && !query.isFetchingNextPage && "opacity-60 transition-opacity")}>
-        {items.map((item) => (
-          <div key={getKey(item)} className="min-w-0">
+        {items.map(({ item, index }) => (
+          <div key={getKey(item)} className="stagger-in min-w-0" style={{ "--stagger": index } as React.CSSProperties}>
             {renderItem(item)}
           </div>
         ))}
@@ -89,14 +91,37 @@ export function ListResults<T>({ query, renderItem, getKey, empty, isFiltered, o
   );
 }
 
+/** Card-shaped placeholder matching the listing tiles (cover, title, meta, footer). */
+export function TileSkeleton({ index = 0 }: { index?: number }) {
+  return (
+    <div
+      className="stagger-in overflow-hidden rounded-xl border border-border bg-card"
+      style={{ "--stagger": index } as React.CSSProperties}
+    >
+      <Skeleton className="h-28 rounded-none" />
+      <div className="space-y-3 p-4">
+        <Skeleton className="h-5 w-4/5" />
+        <Skeleton className="h-3.5 w-full" />
+        <Skeleton className="h-3.5 w-2/3" />
+        <div className="flex items-center gap-2 border-t border-border/70 pt-3">
+          <Skeleton className="size-7 rounded-full" />
+          <Skeleton className="h-3 w-1/3" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ListPageHeader({ title, description, action }: { title: string; description: string; action?: React.ReactNode }) {
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-      <div>
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <div className="animate-fade-in-up">
         <h1 className="font-display text-2xl font-semibold sm:text-3xl">{title}</h1>
-        <p className="mt-1 text-muted-foreground">{description}</p>
+        {/* Brand accent that draws in under the title. */}
+        <span className="gradient-underline mt-2 block h-1 w-14 origin-left animate-grow-x rounded-full" aria-hidden />
+        <p className="mt-2 text-muted-foreground">{description}</p>
       </div>
-      {action}
+      {action && <div className="animate-scale-in [animation-delay:120ms] [animation-fill-mode:both]">{action}</div>}
     </div>
   );
 }

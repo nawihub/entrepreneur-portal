@@ -68,6 +68,7 @@ function OpportunitiesContent() {
       </FilterBar>
 
       <ListResults
+        layout="grid"
         query={feed}
         getKey={(o) => o.id}
         renderItem={(opportunity) => <OpportunityCard opportunity={opportunity} />}

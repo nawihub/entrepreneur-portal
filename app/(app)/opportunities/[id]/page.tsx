@@ -1,16 +1,15 @@
 "use client";
 
 import { use } from "react";
-import Image from "next/image";
 import { HandCoins, Clock, Building2, Mail, Phone, Globe2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { formatEnumLabel } from "@/lib/utils";
 import { useOpportunity } from "@/lib/queries/opportunities";
 import { resolveMediaUrl } from "@/lib/media-url";
+import { FadeImage } from "@/components/motion/fade-image";
 
 export default function OpportunityDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -35,14 +34,14 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ id
   return (
     <div className="container-page max-w-3xl py-6">
       <Card className="animate-fade-in-up overflow-hidden">
-        <div className="relative h-56 w-full bg-gradient-to-br from-secondary-400 to-secondary-600">
+        <div className="tile-pattern relative h-56 w-full overflow-hidden bg-gradient-to-br from-secondary-400 to-secondary-600">
           {opportunity.flierUrl && (
-            <Image src={resolveMediaUrl(opportunity.flierUrl)!} alt="" fill className="object-cover" />
+            <FadeImage src={resolveMediaUrl(opportunity.flierUrl)!} alt="" fill priority sizes="(min-width: 768px) 768px, 100vw" className="animate-hero-zoom object-cover" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5">
             <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge status={opportunity.status} />
+              {/* No status badge: the public page only ever shows approved opportunities. */}
               {opportunity.categories.map((category) => (
                 <span
                   key={category}

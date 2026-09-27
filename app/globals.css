@@ -275,6 +275,9 @@
   --animate-slide-in-bottom: slideInBottom var(--duration-slow) var(--ease-out) forwards;
   --animate-shimmer: shimmer 1.5s ease-in-out infinite;
   --animate-pulse-subtle: pulse 2s var(--ease-in-out) infinite;
+  --animate-grow-x: growX var(--duration-slower) var(--ease-out) both;
+  --animate-fade-in: fadeIn var(--duration-normal) var(--ease-out) both;
+  --animate-hero-zoom: heroZoom 1400ms var(--ease-out) both;
 }
 
 @layer base {
@@ -327,14 +330,112 @@
   }
 
   .card-interactive {
-    transition: all var(--duration-normal) var(--ease-out);
+    transition:
+      transform var(--duration-slow) var(--ease-spring),
+      box-shadow var(--duration-slow) var(--ease-out),
+      border-color var(--duration-normal) var(--ease-out);
   }
   .card-interactive:hover {
-    box-shadow: var(--shadow-color-lg);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-color-xl);
+    transform: translateY(-4px);
+    border-color: hsl(var(--primary) / 0.35);
   }
   .card-interactive:active {
-    transform: scale(0.98);
+    transform: translateY(-1px) scale(0.99);
+    transition-duration: var(--duration-fast);
+  }
+
+  /* ── Listing tiles ─────────────────────────────────────────────
+     Shared anatomy for idea / opportunity / business tiles: a cover
+     (image or tinted band) that zooms on hover, a light sheen sweeping
+     across it, and a "view" arrow that nudges forward. */
+  .tile-cover {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .tile-cover-media {
+    transition: transform var(--duration-slower) var(--ease-out);
+  }
+  .group:hover .tile-cover-media {
+    transform: scale(1.06);
+  }
+  .tile-cover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 0.28) 50%, transparent 70%);
+    transform: translateX(-120%);
+  }
+  .group:hover .tile-cover::after {
+    transform: translateX(120%);
+    transition: transform 900ms var(--ease-out);
+  }
+  .tile-arrow {
+    transition:
+      transform var(--duration-normal) var(--ease-spring),
+      opacity var(--duration-normal) var(--ease-out);
+    opacity: 0.55;
+  }
+  .group:hover .tile-arrow {
+    transform: translateX(4px);
+    opacity: 1;
+  }
+  /* Subtle dot texture for covers without an image - on its own layer so it doesn't
+     inherit (and tile) the element's gradient background. Must sit on a positioned element. */
+  .tile-pattern::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgb(255 255 255 / 0.35) 1px, transparent 1.5px);
+    background-size: 16px 16px;
+    mask-image: linear-gradient(115deg, black 10%, transparent 75%);
+    opacity: 0.6;
+  }
+
+  /* ── Entrance choreography ─────────────────────────────────────
+     Items in a list fade up one after another; --stagger is the item's
+     position within the page just loaded (capped so long pages don't lag). */
+  /* fill-mode "both" (not a base opacity:0) hides items only while the animation runs,
+     so content is never stuck invisible if animations are disabled. */
+  .stagger-in {
+    animation: fadeInUp var(--duration-slower) var(--ease-out) both;
+    animation-delay: calc(min(var(--stagger, 0), 11) * 55ms);
+  }
+  .page-in {
+    animation: pageIn var(--duration-slower) var(--ease-out) both;
+  }
+  /* Scroll reveal - toggled by <Reveal>; content stays visible without JS. */
+  [data-reveal="pending"] {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  [data-reveal="shown"] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--duration-slower) var(--ease-out),
+      transform var(--duration-slower) var(--ease-out);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  .float-slow {
+    animation: floatY 4s var(--ease-in-out) infinite;
+  }
+  .pulse-dot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: pulseRing 1.6s var(--ease-out) infinite;
+  }
+  .gradient-underline {
+    background-image: linear-gradient(90deg, hsl(var(--color-primary-500)), hsl(var(--color-secondary-500)));
+    background-size: 200% 100%;
+    animation: gradientShift 6s var(--ease-in-out) infinite alternate;
   }
 
   .btn-primary-glow {
@@ -360,6 +461,41 @@
   to { transform: translateY(0); }
 }
 
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(12px); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes heroZoom {
+  from { transform: scale(1.08); }
+  to { transform: scale(1); }
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pulseRing {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+@keyframes gradientShift {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+
+@keyframes growX {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -371,6 +507,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  [data-reveal="pending"], .stagger-in {
+    opacity: 1 !important;
+    transform: none !important;
+  }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

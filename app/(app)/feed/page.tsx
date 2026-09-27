@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Lightbulb, HandCoins, Building2, Compass, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TileSkeleton } from "@/components/list-results";
+import { Reveal } from "@/components/motion/reveal";
 import { EmptyState } from "@/components/empty-state";
 import { LoadMoreButton } from "@/components/load-more-button";
 import { BigIdeaCard } from "@/components/feed/big-idea-card";
@@ -17,11 +18,26 @@ import { useOpportunitiesFeed } from "@/lib/queries/opportunities";
 import { useBusinessesFeed } from "@/lib/queries/businesses";
 import type { BigIdea, Business, Opportunity } from "@/lib/api/types";
 
+const GRID = "grid grid-cols-1 gap-4 sm:grid-cols-2";
+
 function CardSkeletons() {
   return (
-    <div className="flex flex-col gap-4">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <Skeleton key={i} className="h-32 w-full" />
+    <div className={GRID}>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <TileSkeleton key={i} index={i} />
+      ))}
+    </div>
+  );
+}
+
+/** Staggers a list of tiles into the feed grid. */
+function Tiles({ children }: { children: React.ReactNode[] }) {
+  return (
+    <div className={GRID}>
+      {children.map((child, i) => (
+        <div key={(child as React.ReactElement).key ?? i} className="stagger-in min-w-0" style={{ "--stagger": i } as React.CSSProperties}>
+          {child}
+        </div>
       ))}
     </div>
   );
@@ -46,9 +62,9 @@ export default function FeedPage() {
   return (
     <div className="container-page grid grid-cols-1 gap-6 py-6 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] xl:grid-cols-[minmax(0,260px)_minmax(0,1fr)_minmax(0,280px)]">
       <aside className="hidden min-w-0 lg:block">
-        <div className="sticky top-20 isolate z-0">
+        <Reveal className="sticky top-20 isolate z-0">
           <LeftRail />
-        </div>
+        </Reveal>
       </aside>
 
       <main className="min-w-0">
@@ -77,15 +93,17 @@ export default function FeedPage() {
                 description="Once ideas, opportunities, and businesses start flowing in, they'll show up here."
               />
             ) : (
-              forYou.map((entry) =>
-                entry.kind === "idea" ? (
-                  <BigIdeaCard key={`idea-${entry.item.id}`} idea={entry.item} />
-                ) : entry.kind === "opportunity" ? (
-                  <OpportunityCard key={`opp-${entry.item.id}`} opportunity={entry.item} />
-                ) : (
-                  <BusinessCard key={`biz-${entry.item.id}`} business={entry.item} />
-                ),
-              )
+              <Tiles>
+                {forYou.map((entry) =>
+                  entry.kind === "idea" ? (
+                    <BigIdeaCard key={`idea-${entry.item.id}`} idea={entry.item} />
+                  ) : entry.kind === "opportunity" ? (
+                    <OpportunityCard key={`opp-${entry.item.id}`} opportunity={entry.item} />
+                  ) : (
+                    <BusinessCard key={`biz-${entry.item.id}`} business={entry.item} />
+                  ),
+                )}
+              </Tiles>
             )}
           </TabsContent>
 
@@ -95,7 +113,7 @@ export default function FeedPage() {
             ) : ideaItems.length === 0 ? (
               <EmptyState icon={Lightbulb} title="No Big Ideas yet" description="Be the first to pitch one." />
             ) : (
-              ideaItems.map((idea) => <BigIdeaCard key={idea.id} idea={idea} />)
+              <Tiles>{ideaItems.map((idea) => <BigIdeaCard key={idea.id} idea={idea} />)}</Tiles>
             )}
             <LoadMoreButton
               hasNextPage={bigIdeas.hasNextPage}
@@ -110,7 +128,7 @@ export default function FeedPage() {
             ) : oppItems.length === 0 ? (
               <EmptyState icon={HandCoins} title="No opportunities yet" description="Check back soon for funding and programs." />
             ) : (
-              oppItems.map((opp) => <OpportunityCard key={opp.id} opportunity={opp} />)
+              <Tiles>{oppItems.map((opp) => <OpportunityCard key={opp.id} opportunity={opp} />)}</Tiles>
             )}
             <LoadMoreButton
               hasNextPage={opportunities.hasNextPage}
@@ -125,7 +143,7 @@ export default function FeedPage() {
             ) : bizItems.length === 0 ? (
               <EmptyState icon={Building2} title="No businesses yet" description="Businesses you register will show up here." />
             ) : (
-              bizItems.map((biz) => <BusinessCard key={biz.id} business={biz} />)
+              <Tiles>{bizItems.map((biz) => <BusinessCard key={biz.id} business={biz} />)}</Tiles>
             )}
             <LoadMoreButton
               hasNextPage={businesses.hasNextPage}
@@ -137,9 +155,9 @@ export default function FeedPage() {
       </main>
 
       <aside className="hidden min-w-0 xl:block">
-        <div className="sticky top-20 isolate z-0">
+        <Reveal className="sticky top-20 isolate z-0" delay={120}>
           <RightRail />
-        </div>
+        </Reveal>
       </aside>
     </div>
   );

@@ -77,6 +77,7 @@ function AllIdeas() {
       </FilterBar>
 
       <ListResults
+        layout="grid"
         query={feed}
         getKey={(i) => i.id}
         renderItem={(idea) => <BigIdeaCard idea={idea} />}
@@ -112,6 +113,7 @@ function MyIdeas() {
       </FilterBar>
 
       <ListResults
+        layout="grid"
         query={feed}
         getKey={(i) => i.id}
         renderItem={(idea) => <BigIdeaCard idea={idea} owned />}

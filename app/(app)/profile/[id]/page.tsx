@@ -429,8 +429,8 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
           {!ventures?.length ? (
             <EmptyState icon={Rocket} title="No ventures listed" description={isOwner ? "Add a venture you've founded or worked on." : "This entrepreneur hasn't listed any ventures yet."} />
           ) : (
-            ventures.map((venture) => (
-              <Card key={venture.id} className="animate-fade-in-up">
+            ventures.map((venture, index) => (
+              <Card key={venture.id} className="stagger-in" style={{ "--stagger": index } as React.CSSProperties}>
                 <CardContent className="flex items-start justify-between gap-3 pt-6">
                   <div>
                     <p className="font-display font-semibold">{venture.name}</p>
@@ -464,8 +464,8 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
             <EmptyState icon={Milestone} title="No journey entries yet" description={isOwner ? "Log the milestones that matter." : "Nothing shared here yet."} />
           ) : (
             <ol className="relative flex flex-col gap-6 border-l border-border pl-6">
-              {journeys.map((entry) => (
-                <li key={entry.id} className="relative animate-fade-in-up">
+              {journeys.map((entry, index) => (
+                <li key={entry.id} className="stagger-in relative" style={{ "--stagger": index } as React.CSSProperties}>
                   <span className="absolute -left-[27px] top-1 size-3 rounded-full bg-primary-500 ring-4 ring-background" />
                   <p className="text-xs text-muted-foreground">{new Date(entry.date).toLocaleDateString()}</p>
                   <div className="flex items-start justify-between gap-3">

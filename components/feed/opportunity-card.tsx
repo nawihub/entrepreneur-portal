@@ -1,7 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
-import { HandCoins, Clock, Globe2 } from "lucide-react";
+import { ArrowRight, Building, CalendarClock, Globe2, HandCoins } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { FadeImage } from "@/components/motion/fade-image";
 import { StatusBadge } from "@/components/status-badge";
 import { cn } from "@/lib/utils";
 import { OPPORTUNITY_CATEGORIES, OPPORTUNITY_SCOPES, labelFor } from "@/lib/data/filter-options";
@@ -14,7 +14,7 @@ function daysUntil(deadline: string) {
 }
 
 function deadlineLabel(daysLeft: number) {
-  if (daysLeft < 0) return "Deadline passed";
+  if (daysLeft < 0) return "Closed";
   if (daysLeft === 0) return "Closes today";
   if (daysLeft === 1) return "1 day left";
   return `${daysLeft} days left`;
@@ -30,55 +30,85 @@ export function OpportunityCard({ opportunity, showStatus = false }: { opportuni
   const categories = opportunity.categories.map((c) =>
     c === "OTHER" && opportunity.categoryOther ? opportunity.categoryOther : labelFor(OPPORTUNITY_CATEGORIES, c),
   );
+  const flier = resolveMediaUrl(opportunity.flierUrl);
+  const scope =
+    opportunity.geographicScope === "OTHER" && opportunity.geographicScopeOther
+      ? opportunity.geographicScopeOther
+      : opportunity.geographicScope
+        ? labelFor(OPPORTUNITY_SCOPES, opportunity.geographicScope)
+        : null;
 
   return (
-    <Card className="card-interactive group relative animate-fade-in-up overflow-hidden focus-within:ring-2 focus-within:ring-ring">
-      <div className="flex gap-4 p-4 sm:p-5">
-        {opportunity.flierUrl ? (
-          <Image
-            src={resolveMediaUrl(opportunity.flierUrl)!}
+    <Card className="card-interactive group @container relative flex h-full flex-col overflow-hidden focus-within:ring-2 focus-within:ring-ring">
+      <div className="tile-cover aspect-[16/9]">
+        {/* Branded cover - shown on its own, or underneath a flier while it loads (or if it fails). */}
+        <div className="tile-cover-media tile-pattern absolute inset-0 flex items-center justify-center bg-gradient-to-br from-secondary-400 via-secondary-500 to-secondary-700">
+          <HandCoins className="size-14 text-white/80 drop-shadow-sm transition-transform duration-slower ease-spring group-hover:-rotate-6 group-hover:scale-110" />
+        </div>
+        {flier && (
+          <FadeImage
+            src={flier}
             alt=""
-            width={56}
-            height={56}
-            className="size-12 shrink-0 rounded-xl object-cover ring-1 ring-border sm:size-14"
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="tile-cover-media object-cover"
           />
-        ) : (
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-secondary-100 text-secondary-700 sm:size-14 dark:bg-secondary-900/50 dark:text-secondary-300">
-            <HandCoins className="size-6" />
-          </div>
         )}
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="truncate text-xs font-semibold uppercase tracking-wide text-secondary-700 dark:text-secondary-400">
-              {categories.length ? categories.slice(0, 2).join(" · ") : "Opportunity"}
-              {categories.length > 2 && ` +${categories.length - 2}`}
-            </span>
-            {showStatus && <StatusBadge status={opportunity.status} />}
+        {/* Keeps the chips legible on busy fliers. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-transparent" />
+
+        <div className="absolute inset-x-3 top-3 z-[2] flex items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap gap-1">
+            {(categories.length ? categories.slice(0, 2) : ["Opportunity"]).map((c) => (
+              <span key={c} className="truncate rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+                {c}
+              </span>
+            ))}
+            {categories.length > 2 && (
+              <span className="rounded-full bg-black/35 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">+{categories.length - 2}</span>
+            )}
           </div>
-          <Link
-            href={`/opportunities/${opportunity.id}`}
-            className="block font-display text-lg font-semibold leading-snug outline-none after:absolute after:inset-0 after:content-[''] group-hover:text-secondary-700 dark:group-hover:text-secondary-300"
+          {showStatus && <StatusBadge status={opportunity.status} className="bg-card/95 shadow-sm" />}
+        </div>
+
+        {daysLeft !== null && (
+          <span
+            className={cn(
+              "absolute bottom-3 left-3 z-[2] flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm",
+              isUrgent ? "bg-error text-white" : daysLeft < 0 ? "bg-neutral-800/80 text-white/80" : "bg-card/95 text-foreground",
+            )}
           >
-            {opportunity.title}
-          </Link>
-          {opportunity.organizationName && (
-            <p className="truncate text-sm text-muted-foreground">{opportunity.organizationName}</p>
-          )}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-muted-foreground">
-            {daysLeft !== null && (
-              <span className={cn("flex items-center gap-1", isUrgent && "font-medium text-error", daysLeft < 0 && "line-through")}>
-                <Clock className="size-3" /> {deadlineLabel(daysLeft)}
-              </span>
+            {isUrgent ? <span className="pulse-dot relative size-1.5 rounded-full bg-white" aria-hidden /> : <CalendarClock className="size-3" />}
+            {deadlineLabel(daysLeft)}
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <Link
+          href={`/opportunities/${opportunity.id}`}
+          className="line-clamp-2 font-display text-lg font-semibold leading-snug outline-none transition-colors after:absolute after:inset-0 after:content-[''] group-hover:text-secondary-700 dark:group-hover:text-secondary-300"
+        >
+          {opportunity.title}
+        </Link>
+        {opportunity.organizationName && (
+          <p className="flex items-center gap-1.5 truncate text-sm text-muted-foreground">
+            <Building className="size-3.5 shrink-0" /> <span className="truncate">{opportunity.organizationName}</span>
+          </p>
+        )}
+
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-border/70 pt-3 text-xs text-muted-foreground">
+          <span className="flex min-w-0 items-center gap-1">
+            {scope && (
+              <>
+                <Globe2 className="size-3.5 shrink-0" /> <span className="truncate">{scope}</span>
+              </>
             )}
-            {opportunity.geographicScope && (
-              <span className="flex items-center gap-1">
-                <Globe2 className="size-3" />
-                {opportunity.geographicScope === "OTHER" && opportunity.geographicScopeOther
-                  ? opportunity.geographicScopeOther
-                  : labelFor(OPPORTUNITY_SCOPES, opportunity.geographicScope)}
-              </span>
-            )}
-          </div>
+          </span>
+          <span className="flex shrink-0 items-center gap-1 font-medium text-secondary-700 dark:text-secondary-300">
+            {/* The label only fits beside the location on wider tiles (e.g. not in the feed column). */}
+            <span className="hidden @[19rem]:inline">View details</span> <ArrowRight className="tile-arrow size-3.5" aria-hidden />
+          </span>
         </div>
       </div>
     </Card>

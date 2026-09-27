@@ -61,6 +61,7 @@ function BusinessesContent() {
       </FilterBar>
 
       <ListResults
+        layout="grid"
         query={feed}
         getKey={(b) => b.id}
         renderItem={(business) => <BusinessCard business={business} />}

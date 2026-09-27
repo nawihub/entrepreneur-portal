@@ -12,6 +12,7 @@ import { useBusiness } from "@/lib/queries/businesses";
 import { startCheckout } from "@/lib/api/payments";
 import { businessesApi } from "@/lib/api/businesses";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { gradientFor, initialsOf } from "@/components/feed/tile-parts";
 import { fileNameFor, saveBlob } from "@/lib/save-blob";
 import { env } from "@/lib/env";
 import { formatEnumLabel } from "@/lib/utils";
@@ -74,9 +75,12 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
   return (
     <div className="container-page max-w-3xl py-6">
       <Card className="animate-fade-in-up overflow-hidden">
-        <div className="relative h-32 w-full bg-gradient-to-br from-primary-400 to-primary-600">
+        <div className="relative h-32 w-full overflow-hidden">
+          <div className={`tile-pattern absolute inset-0 animate-hero-zoom bg-gradient-to-br ${gradientFor(business.businessName)}`} />
           <div className="absolute inset-0 flex items-center justify-center">
-            <Building2 className="size-10 text-white/90" />
+            <span className="flex size-16 animate-scale-in items-center justify-center rounded-2xl bg-white/15 font-display text-2xl font-semibold text-white shadow-lg ring-1 ring-white/30 backdrop-blur-sm">
+              {initialsOf(business.businessName)}
+            </span>
           </div>
         </div>
         <CardHeader className="pb-0">

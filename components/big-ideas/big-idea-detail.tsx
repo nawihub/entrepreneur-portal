@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
 import { IdeaStatusBadge } from "@/components/feed/idea-status-badge";
+import { STAGE_COVERS } from "@/components/feed/big-idea-card";
 import { formatEnumLabel } from "@/lib/utils";
 import { bigIdeaKeys, usePublishBigIdea } from "@/lib/queries/big-ideas";
 import { bigIdeasApi } from "@/lib/api/big-ideas";
@@ -70,9 +71,10 @@ export function BigIdeaDetail({ query, owned }: { query: UseQueryResult<BigIdea>
       {owned && <OwnerStatusPanel idea={idea} />}
 
       <Card className="animate-fade-in-up overflow-hidden">
-        <div className="relative h-32 w-full bg-gradient-to-br from-primary-400 to-primary-600">
+        <div className="relative h-32 w-full overflow-hidden">
+          <div className={`tile-pattern absolute inset-0 animate-hero-zoom bg-gradient-to-br ${STAGE_COVERS[idea.stage] ?? STAGE_COVERS.CONCEPT_ONLY}`} />
           <div className="absolute inset-0 flex items-center justify-center">
-            <Lightbulb className="size-10 text-white/90" />
+            <Lightbulb className="float-slow size-10 text-white/90 drop-shadow" />
           </div>
         </div>
         <CardHeader className="pb-0">
@@ -103,11 +105,14 @@ export function BigIdeaDetail({ query, owned }: { query: UseQueryResult<BigIdea>
           <p className="text-sm leading-relaxed text-muted-foreground">{idea.description}</p>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            {DETAIL_SECTIONS.map(({ label, key }) => {
+            {DETAIL_SECTIONS.filter(({ key }) => idea[key]).map(({ label, key }, index) => {
               const value = idea[key];
-              if (!value) return null;
               return (
-                <div key={key} className="rounded-lg border border-border p-3">
+                <div
+                  key={key}
+                  className="stagger-in rounded-lg border border-border p-3 transition-colors hover:border-primary-300 dark:hover:border-primary-700"
+                  style={{ "--stagger": index + 2 } as React.CSSProperties}
+                >
                   <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
                   <p className="text-sm leading-relaxed">{String(value)}</p>
                 </div>
