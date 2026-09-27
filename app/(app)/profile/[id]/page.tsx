@@ -58,6 +58,7 @@ import {
 } from "@/lib/queries/entrepreneurs";
 import { toast } from "sonner";
 import type { AwardEntry, EducationEntry, MembershipEntry, ReferenceEntry } from "@/lib/api/types";
+import { resolveMediaUrl } from "@/lib/media-url";
 
 const EDUCATION_TYPE_OPTIONS = [
   { value: "FORMAL", label: "Formal" },
@@ -128,7 +129,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-end">
             <ProfileScoreRing score={profile.profileScore} size={104} strokeWidth={6}>
               <Avatar className="size-24 border-4 border-card">
-                <AvatarImage src={identity.profilePhotoUrl ?? undefined} alt={identity.firstName} />
+                <AvatarImage src={resolveMediaUrl(identity.profilePhotoUrl) ?? undefined} alt={identity.firstName} />
                 <AvatarFallback className="text-xl">
                   {identity.firstName?.[0]}
                   {identity.lastName?.[0]}

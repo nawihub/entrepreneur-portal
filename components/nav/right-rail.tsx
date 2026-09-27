@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useEntrepreneursList } from "@/lib/queries/entrepreneurs";
 import { useOpportunityAnalysis } from "@/lib/queries/opportunities";
 import { OPPORTUNITY_CATEGORIES, labelFor } from "@/lib/data/filter-options";
+import { resolveMediaUrl } from "@/lib/media-url";
 
 export function RightRail() {
   const { data: directory, isLoading } = useEntrepreneursList({ pageSize: 4 });
@@ -42,7 +43,7 @@ export function RightRail() {
               className="flex items-center gap-3 rounded-lg p-1.5 -mx-1.5 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
             >
               <Avatar className="size-9">
-                <AvatarImage src={entrepreneur.profilePhotoUrl ?? undefined} />
+                <AvatarImage src={resolveMediaUrl(entrepreneur.profilePhotoUrl) ?? undefined} />
                 <AvatarFallback>{entrepreneur.firstName?.[0]}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">

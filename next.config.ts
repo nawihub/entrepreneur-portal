@@ -3,6 +3,9 @@ import withSerwistInit from "@serwist/next";
 
 const nextConfig: NextConfig = {
   images: {
+    // Local dev serves media from the gateway on localhost, which the optimizer otherwise
+    // refuses (SSRF guard). Never enabled outside `next dev`.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV === "development",
     remotePatterns: [
       // The gateway/storage-service host isn't known yet for this env (no
       // live deployment reachable while this project was scaffolded) - kept

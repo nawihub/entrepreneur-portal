@@ -12,6 +12,9 @@ export interface BusinessFilters {
 export const businessesApi = {
   get: (id: string) => api.get<Business>(`${BASE}/${id}`),
 
+  /** The owner's ID scan - owner-only, so it's fetched with the caller's token. */
+  downloadDocument: (id: string) => api.blob(`${BASE}/${id}/document`, { timeoutMs: 60_000 }),
+
   getByTrackingId: (trackingId: string) =>
     api.get<Business>(`${BASE}/by-tracking-id/${trackingId}`),
 

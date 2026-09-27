@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { cn } from "@/lib/utils";
 import { OPPORTUNITY_CATEGORIES, OPPORTUNITY_SCOPES, labelFor } from "@/lib/data/filter-options";
 import type { Opportunity } from "@/lib/api/types";
+import { resolveMediaUrl } from "@/lib/media-url";
 
 function daysUntil(deadline: string) {
   const ms = new Date(deadline).getTime() - Date.now();
@@ -35,7 +36,7 @@ export function OpportunityCard({ opportunity, showStatus = false }: { opportuni
       <div className="flex gap-4 p-4 sm:p-5">
         {opportunity.flierUrl ? (
           <Image
-            src={opportunity.flierUrl}
+            src={resolveMediaUrl(opportunity.flierUrl)!}
             alt=""
             width={56}
             height={56}

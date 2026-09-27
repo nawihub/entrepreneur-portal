@@ -15,6 +15,7 @@ import { useRateResource, useResource } from "@/lib/queries/resources";
 import { resourcesApi } from "@/lib/api/resources";
 import { ApiError } from "@/lib/api/http";
 import { formatFileSize } from "@/lib/utils";
+import { saveBlob } from "@/lib/save-blob";
 import type { Resource } from "@/lib/api/types";
 
 /** Types the browser can show in-page; anything else is download-only. */
@@ -77,17 +78,10 @@ function ResourceDetail({ resource }: { resource: Resource }) {
     setBusy(action);
     try {
       const blob = await resourcesApi.downloadFile(resource.id);
-      const url = URL.createObjectURL(blob);
       if (action === "preview") {
-        setPreviewUrl(url);
+        setPreviewUrl(URL.createObjectURL(blob));
       } else {
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = resource.fileName;
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-        URL.revokeObjectURL(url);
+        saveBlob(blob, resource.fileName);
       }
     } catch (err) {
       toast.error(

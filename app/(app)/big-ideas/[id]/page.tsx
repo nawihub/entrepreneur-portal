@@ -2,7 +2,7 @@
 
 import { use, useRef, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Clock, Loader2, Lock, Paperclip, Lightbulb, MapPin, Send, User } from "lucide-react";
+import { CheckCircle2, Clock, Download, Loader2, Lock, Paperclip, Lightbulb, MapPin, Send, User } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { formatEnumLabel } from "@/lib/utils";
 import { bigIdeaKeys, useBigIdea, usePublishBigIdea } from "@/lib/queries/big-ideas";
 import { bigIdeasApi } from "@/lib/api/big-ideas";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { fileNameFor, saveBlob } from "@/lib/save-blob";
 import type { BigIdea, BigIdeaStatus, MaterialType } from "@/lib/api/types";
 
 const MATERIAL_TYPES: MaterialType[] = ["PITCH_DECK", "BUSINESS_PLAN", "PROTOTYPE_PHOTO", "VIDEO", "OTHER"];
@@ -123,6 +124,15 @@ export default function BigIdeaDetailPage({ params }: { params: Promise<{ id: st
   );
 }
 
+/** "Pitch deck", or "Pitch deck 2" when the idea has several materials of that type. */
+function materialLabel(idea: BigIdea, index: number) {
+  const type = idea.supportingMaterials[index].type;
+  const sameType = idea.supportingMaterials.filter((m) => m.type === type);
+  const base = formatEnumLabel(type);
+  if (sameType.length < 2) return base;
+  return `${base} ${sameType.indexOf(idea.supportingMaterials[index]) + 1}`;
+}
+
 /** Where the owner's idea is in its lifecycle, and what they can do next. */
 function OwnerStatusPanel({ idea }: { idea: BigIdea }) {
   const publish = usePublishBigIdea();
@@ -191,6 +201,19 @@ function SupportingMaterials({ idea, canAttach }: { idea: BigIdea; canAttach: bo
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [materialType, setMaterialType] = useState<MaterialType>("PITCH_DECK");
   const [uploading, setUploading] = useState(false);
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  async function handleDownload(materialId: string, label: string) {
+    setDownloading(materialId);
+    try {
+      const blob = await bigIdeasApi.downloadSupportingMaterial(idea.id, materialId);
+      saveBlob(blob, fileNameFor(label, blob));
+    } catch {
+      toast.error("Couldn't download this file. Try again in a moment.");
+    } finally {
+      setDownloading(null);
+    }
+  }
 
   async function handleUpload(file: File) {
     setUploading(true);
@@ -210,13 +233,31 @@ function SupportingMaterials({ idea, canAttach }: { idea: BigIdea; canAttach: bo
     <div>
       <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Supporting material</p>
       {idea.supportingMaterials.length ? (
-        <ul className="flex flex-col gap-1">
-          {idea.supportingMaterials.map((material) => (
-            <li key={material.url} className="flex items-center gap-1.5 text-sm">
-              <Paperclip className="size-3.5 text-muted-foreground" />
-              {formatEnumLabel(material.type)} — {material.url.split("/").pop()}
-            </li>
-          ))}
+        <ul className="flex flex-col gap-1.5">
+          {idea.supportingMaterials.map((material, index) => {
+            const label = materialLabel(idea, index);
+            return (
+              <li key={material.id} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
+                <span className="flex min-w-0 items-center gap-2">
+                  <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{label}</span>
+                  <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
+                    {new Date(material.uploadedAt).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                  </span>
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={downloading === material.id}
+                  onClick={() => handleDownload(material.id, label)}
+                  aria-label={`Download ${label}`}
+                >
+                  {downloading === material.id ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+                  <span className="hidden sm:inline">Download</span>
+                </Button>
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <p className="text-sm text-muted-foreground">None attached yet.</p>

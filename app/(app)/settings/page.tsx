@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { authApi } from "@/lib/api/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { resolveMediaUrl } from "@/lib/media-url";
 
 export default function SettingsPage() {
   const user = useAuthStore((s) => s.user);
@@ -51,7 +52,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="flex items-center gap-4">
           <Avatar className="size-16">
-            <AvatarImage src={user?.profilePhotoUrl ?? undefined} />
+            <AvatarImage src={resolveMediaUrl(user?.profilePhotoUrl) ?? undefined} />
             <AvatarFallback>{user?.firstName?.[0]}</AvatarFallback>
           </Avatar>
           <div className="flex gap-2">

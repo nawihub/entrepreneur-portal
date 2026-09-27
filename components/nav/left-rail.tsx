@@ -11,6 +11,7 @@ import { useOwnEntrepreneurProfile } from "@/lib/queries/entrepreneurs";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { formatEnumLabel } from "@/lib/utils";
 import { skillLabel } from "@/lib/data/skills";
+import { resolveMediaUrl } from "@/lib/media-url";
 
 export function LeftRail() {
   const user = useAuthStore((s) => s.user);
@@ -37,7 +38,7 @@ export function LeftRail() {
       <Card className="animate-fade-in-up">
         <CardContent className="flex flex-col items-center gap-3 pt-6 text-center">
           <Avatar className="size-16">
-            <AvatarImage src={user?.profilePhotoUrl ?? undefined} />
+            <AvatarImage src={resolveMediaUrl(user?.profilePhotoUrl) ?? undefined} />
             <AvatarFallback>{user?.firstName?.[0]}</AvatarFallback>
           </Avatar>
           <div>
@@ -57,7 +58,7 @@ export function LeftRail() {
       <Card className="animate-fade-in-up">
         <CardContent className="flex flex-col items-center gap-3 pt-6 text-center">
           <Avatar className="size-16">
-            <AvatarImage src={profile.profilePhotoUrl ?? undefined} />
+            <AvatarImage src={resolveMediaUrl(profile.profilePhotoUrl) ?? undefined} />
             <AvatarFallback>{profile.firstName?.[0]}</AvatarFallback>
           </Avatar>
           <div>
@@ -78,7 +79,7 @@ export function LeftRail() {
       <CardContent className="-mt-8 flex flex-col items-center gap-2 pt-0 text-center">
         <ProfileScoreRing score={profile.profileScore} size={72}>
           <Avatar className="size-16 border-2 border-card">
-            <AvatarImage src={profile.profilePhotoUrl ?? undefined} alt={profile.firstName} />
+            <AvatarImage src={resolveMediaUrl(profile.profilePhotoUrl) ?? undefined} alt={profile.firstName} />
             <AvatarFallback>{profile.firstName?.[0]}{profile.lastName?.[0]}</AvatarFallback>
           </Avatar>
         </ProfileScoreRing>

@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import { toast } from "sonner";
-import { Building2, CreditCard, MapPin, User } from "lucide-react";
+import { Building2, CreditCard, Download, FileText, Loader2, MapPin, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +10,9 @@ import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { useBusiness } from "@/lib/queries/businesses";
 import { startCheckout } from "@/lib/api/payments";
+import { businessesApi } from "@/lib/api/businesses";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { fileNameFor, saveBlob } from "@/lib/save-blob";
 import { env } from "@/lib/env";
 import { formatEnumLabel } from "@/lib/utils";
 
@@ -17,6 +20,8 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
   const { id } = use(params);
   const { data: business, isLoading, isError } = useBusiness(id);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [downloadingDoc, setDownloadingDoc] = useState(false);
+  const userId = useAuthStore((s) => s.user?.id);
 
   if (isLoading) {
     return (
@@ -32,6 +37,21 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
         <EmptyState icon={Building2} title="Business not found" />
       </div>
     );
+  }
+
+  const isOwner = Boolean(userId && business.ownerId && business.ownerId === userId);
+
+  async function handleDownloadDocument() {
+    if (!business) return;
+    setDownloadingDoc(true);
+    try {
+      const blob = await businessesApi.downloadDocument(business.id);
+      saveBlob(blob, fileNameFor(`${business.businessName} - ID document`, blob));
+    } catch {
+      toast.error("Couldn't download your ID document. Try again in a moment.");
+    } finally {
+      setDownloadingDoc(false);
+    }
   }
 
   async function handlePayNow() {
@@ -94,6 +114,18 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
           </div>
           {business.rejectionReason && (
             <div className="rounded-lg bg-error/10 p-3 text-sm text-error">{business.rejectionReason}</div>
+          )}
+
+          {isOwner && business.documentUrl && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
+              <span className="flex items-center gap-2">
+                <FileText className="size-4 text-muted-foreground" /> ID document submitted with this registration
+                <span className="text-xs text-muted-foreground">(only visible to you)</span>
+              </span>
+              <Button variant="ghost" size="sm" disabled={downloadingDoc} onClick={handleDownloadDocument}>
+                {downloadingDoc ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />} Download
+              </Button>
+            </div>
           )}
 
           {business.status === "PAYMENT_PENDING" && (

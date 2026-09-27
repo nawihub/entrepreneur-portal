@@ -318,7 +318,9 @@ export interface IdeaApplicant {
 export type IdeaApplicantSummary = Omit<IdeaApplicant, "phone" | "email">;
 
 export interface SupportingMaterial {
+  id: string;
   type: MaterialType;
+  // Gateway download path - drafts' materials need the owner's token, so fetch it via the API client
   url: string;
   uploadedAt: string;
 }
@@ -420,6 +422,8 @@ export interface Business {
   registerDate?: string | null;
   status: BusinessStatus;
   rejectionReason?: string | null;
+  // The owner's ID scan (owner-only download); null when none is stored
+  documentUrl?: string | null;
   createTime: string;
   updateTime: string;
 }

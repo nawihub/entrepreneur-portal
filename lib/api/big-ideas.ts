@@ -72,6 +72,10 @@ export const bigIdeasApi = {
     return api.upload<BigIdea>(`${BASE}/${id}/supporting-material`, form, { query: { materialType } });
   },
 
+  /** Owner-only until the idea is approved, so it's fetched with the caller's token. */
+  downloadSupportingMaterial: (id: string, materialId: string) =>
+    api.blob(`${BASE}/${id}/materials/${materialId}`, { timeoutMs: 120_000 }),
+
   // Moderation (review/approve/decline) and deletion are admin-only and aren't exposed by the
   // web gateway at all.
 };

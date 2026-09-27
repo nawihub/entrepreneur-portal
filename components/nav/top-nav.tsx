@@ -34,6 +34,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { authApi } from "@/lib/api/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { cn } from "@/lib/utils";
+import { resolveMediaUrl } from "@/lib/media-url";
 
 const NAV_ITEMS = [
   { href: "/feed", label: "Feed", icon: Home },
@@ -147,7 +148,7 @@ export function TopNav() {
             <DropdownMenuTrigger asChild>
               <button className="ml-1 rounded-full transition-transform hover:scale-105" aria-label="Account menu">
                 <Avatar>
-                  <AvatarImage src={user?.profilePhotoUrl ?? undefined} alt={user?.displayName} />
+                  <AvatarImage src={resolveMediaUrl(user?.profilePhotoUrl) ?? undefined} alt={user?.displayName} />
                   <AvatarFallback>{initials(user?.firstName, user?.lastName)}</AvatarFallback>
                 </Avatar>
               </button>

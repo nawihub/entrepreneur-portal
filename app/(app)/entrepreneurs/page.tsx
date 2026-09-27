@@ -14,6 +14,7 @@ import { LoadMoreButton } from "@/components/load-more-button";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { entrepreneursApi } from "@/lib/api/entrepreneurs";
 import { entrepreneurKeys } from "@/lib/queries/entrepreneurs";
+import { resolveMediaUrl } from "@/lib/media-url";
 
 function DirectoryContent() {
   const searchParams = useSearchParams();
@@ -69,7 +70,7 @@ function DirectoryContent() {
                 <Card className="card-interactive h-full animate-fade-in-up">
                   <CardContent className="flex flex-col items-center gap-2 pt-6 text-center">
                     <Avatar className="size-16">
-                      <AvatarImage src={entrepreneur.profilePhotoUrl ?? undefined} />
+                      <AvatarImage src={resolveMediaUrl(entrepreneur.profilePhotoUrl) ?? undefined} />
                       <AvatarFallback>{entrepreneur.firstName?.[0]}</AvatarFallback>
                     </Avatar>
                     <p className="font-display font-semibold">

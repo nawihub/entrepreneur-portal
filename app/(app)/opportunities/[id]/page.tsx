@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { formatEnumLabel } from "@/lib/utils";
 import { useOpportunity } from "@/lib/queries/opportunities";
+import { resolveMediaUrl } from "@/lib/media-url";
 
 export default function OpportunityDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -36,7 +37,7 @@ export default function OpportunityDetailPage({ params }: { params: Promise<{ id
       <Card className="animate-fade-in-up overflow-hidden">
         <div className="relative h-56 w-full bg-gradient-to-br from-secondary-400 to-secondary-600">
           {opportunity.flierUrl && (
-            <Image src={opportunity.flierUrl} alt="" fill className="object-cover" />
+            <Image src={resolveMediaUrl(opportunity.flierUrl)!} alt="" fill className="object-cover" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5">
