@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   Search,
@@ -15,6 +15,7 @@ import {
   LogOut,
   Settings,
   UserRound,
+  Bookmark,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -32,6 +33,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { authApi } from "@/lib/api/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/feed", label: "Feed", icon: Home },
@@ -52,6 +54,8 @@ function initials(firstName?: string, lastName?: string) {
  * than wired to a fabricated API. */
 export function TopNav() {
   const router = useRouter();
+  const pathname = usePathname();
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const user = useAuthStore((s) => s.user);
   const [query, setQuery] = useState("");
 
@@ -86,14 +90,26 @@ export function TopNav() {
         </form>
 
         <nav className="hidden flex-1 items-center justify-center gap-1 md:flex">
-          {NAV_ITEMS.map((item) => (
-            <Button key={item.href} variant="ghost" size="sm" asChild className="flex-col h-auto gap-0.5 px-3 py-1.5">
-              <Link href={item.href}>
-                <item.icon className="size-5" />
-                <span className="text-[11px] font-medium">{item.label}</span>
-              </Link>
-            </Button>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Button
+                key={item.href}
+                variant="ghost"
+                size="sm"
+                asChild
+                className={cn(
+                  "relative h-auto flex-col gap-0.5 px-3 py-1.5 text-muted-foreground",
+                  active && "text-primary-700 after:absolute after:inset-x-3 after:-bottom-[9px] after:h-0.5 after:rounded-full after:bg-primary-500 dark:text-primary-300",
+                )}
+              >
+                <Link href={item.href} aria-current={active ? "page" : undefined}>
+                  <item.icon className="size-5" />
+                  <span className="text-[11px] font-medium">{item.label}</span>
+                </Link>
+              </Button>
+            );
+          })}
         </nav>
 
         <div className="ml-auto flex items-center gap-1">
@@ -145,6 +161,11 @@ export function TopNav() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
+                <Link href="/resources?view=saved">
+                  <Bookmark /> Saved resources
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href="/settings">
                   <Settings /> Settings
                 </Link>
@@ -159,12 +180,23 @@ export function TopNav() {
       </div>
 
       <nav className="flex items-center justify-around border-t border-border/60 py-1 md:hidden">
-        {NAV_ITEMS.map((item) => (
-          <Link key={item.href} href={item.href} className="flex flex-col items-center gap-0.5 px-2 py-1.5 text-muted-foreground">
-            <item.icon className="size-5" />
-            <span className="text-[10px] font-medium">{item.label}</span>
-          </Link>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const active = isActive(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "flex flex-col items-center gap-0.5 px-2 py-1.5 text-muted-foreground",
+                active && "text-primary-700 dark:text-primary-300",
+              )}
+            >
+              <item.icon className="size-5" />
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </Link>
+          );
+        })}
       </nav>
     </header>
   );

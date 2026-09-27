@@ -3,6 +3,12 @@ import type { Business, BusinessMeta, Page, PageParams } from "@/lib/api/types";
 
 const BASE = "/api/v1/businesses";
 
+export interface BusinessFilters {
+  query?: string;
+  status?: string;
+  categories?: string[];
+}
+
 export const businessesApi = {
   get: (id: string) => api.get<Business>(`${BASE}/${id}`),
 
@@ -13,7 +19,8 @@ export const businessesApi = {
   // signed-in user's own registrations, not a public directory; the gateway
   // scopes ownership server-side off the bearer token, not a client-supplied
   // ownerId.
-  list: (params?: PageParams & { status?: string }) =>
+  // query matches the business name.
+  list: (params?: PageParams & BusinessFilters) =>
     api.get<Page<Business>>(`${BASE}/mine`, { query: params }),
 
   register: (meta: BusinessMeta, idScan: File) => {

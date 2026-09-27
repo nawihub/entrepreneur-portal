@@ -5,6 +5,7 @@ import { BarChart3 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
+import { OPPORTUNITY_CATEGORIES, labelFor } from "@/lib/data/filter-options";
 import { useOpportunityAnalysis } from "@/lib/queries/opportunities";
 
 export default function OpportunityAnalysisPage() {
@@ -32,7 +33,7 @@ export default function OpportunityAnalysisPage() {
           <CardContent>
             <div className="h-96 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analysis} layout="vertical" margin={{ left: 24 }}>
+                <BarChart data={analysis.map((entry) => ({ ...entry, category: labelFor(OPPORTUNITY_CATEGORIES, entry.category) }))} layout="vertical" margin={{ left: 24 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                   <XAxis type="number" allowDecimals={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
                   <YAxis

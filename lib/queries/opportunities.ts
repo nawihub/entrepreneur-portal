@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { opportunitiesApi } from "@/lib/api/opportunities";
 
 export const opportunityKeys = {
@@ -21,6 +21,8 @@ export function useOpportunitiesFeed(params?: Parameters<typeof opportunitiesApi
     queryKey: opportunityKeys.list(params),
     queryFn: ({ pageParam }) =>
       opportunitiesApi.list({ ...params, pageToken: pageParam as string | undefined }),
+    // Keep showing the previous results (dimmed) while a new search/filter loads.
+    placeholderData: keepPreviousData,
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => (lastPage.hasNextPage ? lastPage.nextPageToken ?? undefined : undefined),
   });

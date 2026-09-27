@@ -41,11 +41,25 @@ export interface CreateBigIdeaPayload {
   whySelected?: string;
 }
 
+export interface BigIdeaFilters {
+  searchQuery?: string;
+  stage?: string;
+  submissionType?: string;
+}
+
 export const bigIdeasApi = {
   get: (id: string) => api.get<BigIdea>(`${BASE}/${id}`),
 
-  list: (params?: PageParams & { submissionType?: string; stage?: string; status?: string; searchQuery?: string }) =>
+  /** Public browsing - the gateway only ever returns approved ideas. */
+  list: (params?: PageParams & BigIdeaFilters) =>
     api.get<Page<BigIdea>>(BASE, { query: params }),
+
+  /** The caller's own ideas in every status, drafts included. */
+  listMine: (params?: PageParams & BigIdeaFilters & { status?: string }) =>
+    api.get<Page<BigIdea>>(`${BASE}/mine`, { query: params }),
+
+  /** Owner submits their draft for moderation (PENDING -> PUBLISHED). */
+  publish: (id: string) => api.post<BigIdea>(`${BASE}/${id}/publish`),
 
   create: (payload: CreateBigIdeaPayload) =>
     api.post<BigIdea>(BASE, payload),
@@ -58,9 +72,6 @@ export const bigIdeasApi = {
     return api.upload<BigIdea>(`${BASE}/${id}/supporting-material`, form, { query: { materialType } });
   },
 
-  remove: (id: string) => api.delete<void>(`${BASE}/${id}`),
-
-  // review/approve/decline are deliberately not exposed here - they're
-  // admin-only moderation RPCs, not something an entrepreneur-facing app
-  // should be able to call.
+  // Moderation (review/approve/decline) and deletion are admin-only and aren't exposed by the
+  // web gateway at all.
 };

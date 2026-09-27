@@ -123,10 +123,10 @@ export default function NewBigIdeaPage() {
       ) as CreateBigIdeaPayload;
 
       const idea = await createMutation.mutateAsync(payload);
-      toast.success("Your idea has been submitted for review");
+      toast.success("Draft saved - add supporting materials, then publish it for review");
       router.replace(`/big-ideas/${idea.id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't submit your idea");
+      toast.error(err instanceof Error ? err.message : "Couldn't save your idea");
     }
   }
 
@@ -408,7 +408,7 @@ export default function NewBigIdeaPage() {
             </Button>
           ) : (
             <Button onClick={handleSubmit} disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Submitting…" : "Submit for review"}
+              {createMutation.isPending ? "Saving…" : "Save draft"}
             </Button>
           )}
         </div>

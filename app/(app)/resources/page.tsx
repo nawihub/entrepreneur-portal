@@ -1,72 +1,128 @@
 "use client";
 
-import Link from "next/link";
-import { BookOpen, Folder, Tag } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/empty-state";
-import { LoadMoreButton } from "@/components/load-more-button";
-import { useResourcesFeed } from "@/lib/queries/resources";
+import { Suspense } from "react";
+import { Bookmark, BookOpen, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ListPageHeader, ListResults } from "@/components/list-results";
+import { FilterBar } from "@/components/filters/filter-bar";
+import { SearchField } from "@/components/filters/search-field";
+import { SelectFilter } from "@/components/filters/select-filter";
+import { ResourceCard, formatTag } from "@/components/resources/resource-card";
+import { useBookmarkedResources, useResourcesFeed } from "@/lib/queries/resources";
+import { useUrlFilters } from "@/lib/hooks/use-url-filters";
+import { RESOURCE_FORMATS, RESOURCE_TYPES } from "@/lib/data/filter-options";
+import type { ResourceFormat, ResourceType } from "@/lib/api/types";
+
+const VIEW = { single: ["view"] } as const;
+const FILTERS = { single: ["q", "type", "format"], multi: ["tags"] } as const;
 
 export default function ResourcesPage() {
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, isError } = useResourcesFeed({ pageSize: 12 });
-  const items = data?.pages.flatMap((p) => p.items) ?? [];
-
   return (
     <div className="container-page py-6">
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-semibold">Resources</h1>
-        <p className="text-muted-foreground">Templates, guides, and documents for building your venture.</p>
-      </div>
-
-      {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-      ) : isError || items.length === 0 ? (
-        <EmptyState
-          icon={BookOpen}
-          title="No resources available"
-          description={
-            isError
-              ? "The resources list endpoint isn't confirmed against the live API yet - see lib/api/resources.ts."
-              : "Check back soon for templates and guides."
-          }
-        />
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((resource) => (
-              <Link key={resource.id} href={`/resources/${resource.id}`}>
-                <Card className="card-interactive h-full animate-fade-in-up">
-                  <CardContent className="flex flex-col gap-2 pt-6">
-                    <div className="flex size-9 items-center justify-center rounded-lg bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300">
-                      <BookOpen className="size-4" />
-                    </div>
-                    <p className="font-display font-semibold">{resource.title}</p>
-                    {resource.description && <p className="line-clamp-2 text-sm text-muted-foreground">{resource.description}</p>}
-                    <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      {resource.folder && (
-                        <span className="flex items-center gap-1">
-                          <Folder className="size-3" /> {resource.folder}
-                        </span>
-                      )}
-                      {resource.tags.slice(0, 2).map((tag) => (
-                        <span key={tag} className="flex items-center gap-1">
-                          <Tag className="size-3" /> {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-          <LoadMoreButton hasNextPage={hasNextPage} isFetching={isFetchingNextPage} onClick={() => fetchNextPage()} />
-        </>
-      )}
+      <ListPageHeader title="Resources" description="Templates, guides and videos to help you plan, launch and grow." />
+      {/* useSearchParams needs a Suspense boundary for production builds. */}
+      <Suspense>
+        <ResourcesContent />
+      </Suspense>
     </div>
+  );
+}
+
+function ResourcesContent() {
+  const view = useUrlFilters(VIEW);
+  const saved = view.values.view === "saved";
+
+  return (
+    <Tabs value={saved ? "saved" : "all"} onValueChange={(v) => view.update({ view: v === "saved" ? "saved" : "" })}>
+      <TabsList className="mb-5">
+        <TabsTrigger value="all">
+          <BookOpen className="size-4" /> All resources
+        </TabsTrigger>
+        <TabsTrigger value="saved">
+          <Bookmark className="size-4" /> Saved
+        </TabsTrigger>
+      </TabsList>
+      {saved ? <SavedResources onBrowse={() => view.update({ view: "" })} /> : <AllResources />}
+    </Tabs>
+  );
+}
+
+function AllResources() {
+  const { values, update, clear, activeCount } = useUrlFilters(FILTERS);
+  const isVideo = values.type === "VIDEO";
+  const feed = useResourcesFeed({
+    pageSize: 12,
+    query: values.q || undefined,
+    type: (values.type || undefined) as ResourceType | undefined,
+    // Videos have no document format, so a format filter would match nothing.
+    format: (isVideo ? undefined : values.format || undefined) as ResourceFormat | undefined,
+    tags: values.tags,
+  });
+
+  return (
+    <>
+      <FilterBar
+        activeCount={activeCount}
+        onClear={clear}
+        search={<SearchField value={values.q} onChange={(q) => update({ q })} placeholder="Search resources…" className="max-w-xl" />}
+      >
+        <SelectFilter
+          label="Type"
+          value={values.type}
+          options={RESOURCE_TYPES}
+          onChange={(type) => update({ type, ...(type === "VIDEO" ? { format: "" } : {}) })}
+        />
+        {!isVideo && <SelectFilter label="Format" value={values.format} options={RESOURCE_FORMATS} onChange={(format) => update({ format })} />}
+        {values.tags.map((tag) => (
+          <button
+            key={tag}
+            type="button"
+            onClick={() => update({ tags: values.tags.filter((t) => t !== tag) })}
+            className="flex h-9 items-center gap-1.5 rounded-full border border-primary-500 bg-primary-50 px-3 text-sm text-primary-800 dark:bg-primary-900/40 dark:text-primary-200"
+            aria-label={`Remove tag filter ${formatTag(tag)}`}
+          >
+            #{formatTag(tag)} <X className="size-3.5" />
+          </button>
+        ))}
+      </FilterBar>
+
+      <ListResults
+        layout="grid"
+        query={feed}
+        getKey={(r) => r.id}
+        renderItem={(resource) => (
+          <ResourceCard
+            resource={resource}
+            onTagClick={(tag) => !values.tags.includes(tag) && update({ tags: [...values.tags, tag] })}
+          />
+        )}
+        isFiltered={activeCount > 0}
+        onClearFilters={clear}
+        empty={{ icon: BookOpen, title: "No resources yet", description: "New templates, guides and videos will appear here as they're published." }}
+      />
+    </>
+  );
+}
+
+function SavedResources({ onBrowse }: { onBrowse: () => void }) {
+  const saved = useBookmarkedResources();
+  return (
+    <ListResults
+      layout="grid"
+      query={saved}
+      getKey={(r) => r.id}
+      renderItem={(resource) => <ResourceCard resource={resource} />}
+      empty={{
+        icon: Bookmark,
+        title: "Nothing saved yet",
+        description: "Tap the bookmark on any resource to keep it here for later.",
+        action: (
+          <Button variant="outline" size="sm" onClick={onBrowse}>
+            Browse resources
+          </Button>
+        ),
+      }}
+    />
   );
 }

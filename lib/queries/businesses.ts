@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { businessesApi } from "@/lib/api/businesses";
 import type { BusinessMeta } from "@/lib/api/types";
 
@@ -21,6 +21,8 @@ export function useBusinessesFeed(params?: Parameters<typeof businessesApi.list>
     queryKey: businessKeys.list(params),
     queryFn: ({ pageParam }) =>
       businessesApi.list({ ...params, pageToken: pageParam as string | undefined }),
+    // Keep showing the previous results (dimmed) while a new search/filter loads.
+    placeholderData: keepPreviousData,
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => (lastPage.hasNextPage ? lastPage.nextPageToken ?? undefined : undefined),
   });

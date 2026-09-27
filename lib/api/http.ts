@@ -50,11 +50,16 @@ interface RequestOptions {
   /** Pass a FormData instance directly for multipart uploads - the
    * Content-Type (with boundary) is left for the browser to set. */
   form?: FormData;
-  query?: Record<string, string | number | boolean | undefined | null>;
+  /** Arrays are sent comma-separated, which Spring binds to List<String>; empty ones are omitted. */
+  query?: Record<string, string | string[] | number | boolean | undefined | null>;
   /** Skip attaching a bearer token / retrying on 401 - for the handful of
    * public gateway endpoints. */
   auth?: boolean;
   signal?: AbortSignal;
+  /** Overrides the default 15s timeout, e.g. for large file downloads. */
+  timeoutMs?: number;
+  /** Return the raw body as a Blob (file downloads) instead of parsed JSON/text. */
+  responseType?: "json" | "blob";
 }
 
 function buildUrl(path: string, query?: RequestOptions["query"]) {
@@ -63,7 +68,9 @@ function buildUrl(path: string, query?: RequestOptions["query"]) {
   );
   if (query) {
     for (const [key, value] of Object.entries(query)) {
-      if (value !== undefined && value !== null) {
+      if (Array.isArray(value)) {
+        if (value.length) url.searchParams.set(key, value.join(","));
+      } else if (value !== undefined && value !== null && value !== "") {
         url.searchParams.set(key, String(value));
       }
     }
@@ -85,7 +92,7 @@ async function request<T>(
   options: RequestOptions = {},
   isRetry = false,
 ): Promise<T> {
-  const { method = "GET", body, form, query, auth = true, signal } = options;
+  const { method = "GET", body, form, query, auth = true, signal, timeoutMs = 15_000, responseType = "json" } = options;
 
   const headers: Record<string, string> = {};
   let payload: BodyInit | undefined;
@@ -113,7 +120,7 @@ async function request<T>(
       method,
       headers,
       body: payload,
-      signal: signal ?? AbortSignal.timeout(15_000),
+      signal: signal ?? AbortSignal.timeout(timeoutMs),
     });
   } catch (err) {
     if (err instanceof DOMException && err.name === "TimeoutError") {
@@ -142,6 +149,9 @@ async function request<T>(
     throw new ApiError(res.status, errBody, message);
   }
 
+  if (responseType === "blob") {
+    return (await res.blob()) as T;
+  }
   return (await parseBody(res)) as T;
 }
 
@@ -156,6 +166,8 @@ export const api = {
     request<T>(path, { ...options, method: "PUT", body }),
   delete: <T>(path: string, options?: Omit<RequestOptions, "method" | "body">) =>
     request<T>(path, { ...options, method: "DELETE" }),
+  blob: (path: string, options?: Omit<RequestOptions, "method" | "body" | "form" | "responseType">) =>
+    request<Blob>(path, { ...options, method: "GET", responseType: "blob" }),
   upload: <T>(path: string, form: FormData, options?: Omit<RequestOptions, "method" | "form" | "body">) =>
     request<T>(path, { ...options, method: "POST", form }),
 };

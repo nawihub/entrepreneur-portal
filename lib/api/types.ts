@@ -36,7 +36,7 @@ export interface Page<T> {
 export interface PageParams {
   pageSize?: number;
   pageToken?: string;
-  [key: string]: string | number | undefined;
+  [key: string]: string | string[] | number | boolean | undefined;
 }
 
 /** Generic shape for gateway error bodies (Spring `ProblemDetail`-style). */
@@ -297,7 +297,10 @@ export type MaterialType =
   | "PITCH_DECK"
   | "OTHER";
 
-export type BigIdeaStatus = "PENDING" | "IN_REVIEW" | "APPROVED" | "DECLINED";
+// PENDING is the owner's private draft. The owner publishes it (PUBLISHED) to submit it for
+// moderation; admins then move it to IN_REVIEW and APPROVED/DECLINED. Supporting materials can
+// only be added while PENDING or PUBLISHED.
+export type BigIdeaStatus = "PENDING" | "PUBLISHED" | "IN_REVIEW" | "APPROVED" | "DECLINED";
 
 export interface IdeaApplicant {
   fullName: string;
@@ -322,6 +325,7 @@ export interface SupportingMaterial {
 
 export interface BigIdea {
   id: string;
+  ownerId?: string | null; // the submitting user; null only for ideas created before ownership existed
   applicant: IdeaApplicantSummary;
   ideaName: string;
   oneLineDescription: string;
@@ -504,24 +508,51 @@ export interface CategoryAnalysisSummary {
 // Resources
 // ---------------------------------------------------------------------------
 
-export interface ResourceAttachment {
-  bucketName: string;
-  objectName: string;
-  fileName: string;
-  contentType?: string | null;
-  sizeBytes?: number | null;
-}
+// Mirrors ResourceModel.ResourceSummary on web-api-gateway. Entrepreneurs only ever
+// receive approved, non-private resources - the gateway hides everything else (404).
+
+export type ResourceFormat =
+  | "TEMPLATE"
+  | "GUIDE"
+  | "CHECKLIST"
+  | "CASE_STUDY"
+  | "COURSE"
+  | "FRAMEWORK"
+  | "NOT_APPLICABLE"; // videos have no document format
+
+export type ResourceType = "DOCUMENT" | "VIDEO";
+
+// PUBLIC resources can be downloaded; PREMIUM ones are listed but can't be downloaded
+// or rated until purchases are tracked (the gateway answers 403).
+export type ResourceAccessLevel = "PUBLIC" | "PREMIUM";
 
 export interface Resource {
   id: string;
   title: string;
-  description?: string | null;
-  category?: string | null;
-  tags: string[];
-  folder?: string | null;
-  attachments: ResourceAttachment[];
+  format: ResourceFormat;
+  type: ResourceType;
+  tags: string[]; // namespaced, e.g. "stage:launch"
+  description: string;
+  fileName: string;
+  mimeType: string;
+  fileFormat: string;
+  fileSize: number;
+  thumbnailUrl: string | null; // public image, safe for <img>
+  accessLevel: ResourceAccessLevel;
+  downloadUrl: string | null; // authenticated gateway path; null for premium
+  featured: boolean;
+  averageRating: number; // across all users, 0 when unrated
+  ratingCount: number;
+  bookmarked: boolean; // the caller's own state
+  myRating: number | null; // the caller's own rating
   createTime: string;
   updateTime: string;
+}
+
+export interface RatingSummary {
+  averageRating: number;
+  ratingCount: number;
+  myRating: number | null;
 }
 
 // ---------------------------------------------------------------------------

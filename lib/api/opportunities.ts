@@ -9,6 +9,13 @@ import type {
 
 const BASE = "/api/v1/opportunities";
 
+export interface OpportunityFilters {
+  searchQuery?: string;
+  categories?: string[];
+  targetBeneficiaries?: string[];
+  geographicScope?: string;
+}
+
 export interface CreateOpportunityPayload {
   title: string;
   organization?: string;
@@ -22,7 +29,8 @@ export interface CreateOpportunityPayload {
 export const opportunitiesApi = {
   get: (id: string) => api.get<Opportunity>(`${BASE}/${id}`),
 
-  list: (params?: PageParams & { category?: string; status?: string }) =>
+  // searchQuery matches title and organization name.
+  list: (params?: PageParams & OpportunityFilters & { status?: string }) =>
     api.get<Page<Opportunity>>(BASE, { query: params }),
 
   // Backend returns a bare array, not an object wrapper - see CategoryAnalysisSummary.

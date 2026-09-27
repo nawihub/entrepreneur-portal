@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEntrepreneursList } from "@/lib/queries/entrepreneurs";
 import { useOpportunityAnalysis } from "@/lib/queries/opportunities";
+import { OPPORTUNITY_CATEGORIES, labelFor } from "@/lib/data/filter-options";
 
 export function RightRail() {
   const { data: directory, isLoading } = useEntrepreneursList({ pageSize: 4 });
@@ -73,10 +74,14 @@ export function RightRail() {
           </CardHeader>
           <CardContent className="flex flex-col gap-2.5">
             {analysis.slice(0, 5).map((entry) => (
-              <div key={entry.category} className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{entry.category}</span>
+              <Link
+                key={entry.category}
+                href={`/opportunities?categories=${entry.category}`}
+                className="-mx-1.5 flex items-center justify-between rounded-md px-1.5 py-0.5 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              >
+                <span className="text-muted-foreground">{labelFor(OPPORTUNITY_CATEGORIES, entry.category)}</span>
                 <span className="font-medium">{entry.opportunityCount}</span>
-              </div>
+              </Link>
             ))}
             <Link
               href="/opportunities/analysis"
