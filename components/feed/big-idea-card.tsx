@@ -6,10 +6,10 @@ import { IDEA_STAGES, IDEA_SUBMISSION_TYPES, labelFor } from "@/lib/data/filter-
 import type { BigIdea } from "@/lib/api/types";
 
 /**
- * @param showStatus public listings only ever contain approved ideas, so the status badge
- *                   is noise there - show it on the owner's own list, where statuses vary.
+ * @param owned the card is in the owner's own list: statuses vary there (public listings only
+ *              ever contain approved ideas), and it links to the owner's view of the idea.
  */
-export function BigIdeaCard({ idea, showStatus = false }: { idea: BigIdea; showStatus?: boolean }) {
+export function BigIdeaCard({ idea, owned = false }: { idea: BigIdea; owned?: boolean }) {
   return (
     <Card className="card-interactive group relative animate-fade-in-up overflow-hidden focus-within:ring-2 focus-within:ring-ring">
       <div className="flex gap-4 p-4 sm:p-5">
@@ -21,12 +21,12 @@ export function BigIdeaCard({ idea, showStatus = false }: { idea: BigIdea; showS
             <span className="text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-400">
               {labelFor(IDEA_STAGES, idea.stage)}
             </span>
-            {showStatus && <IdeaStatusBadge status={idea.status} />}
+            {owned && <IdeaStatusBadge status={idea.status} />}
           </div>
           {/* Stretched link: the title's ::after covers the whole card, so the card is one
               link target without nesting interactive elements inside an <a>. */}
           <Link
-            href={`/big-ideas/${idea.id}`}
+            href={owned ? `/big-ideas/mine/${idea.id}` : `/big-ideas/${idea.id}`}
             className="block font-display text-lg font-semibold leading-snug outline-none after:absolute after:inset-0 after:content-[''] group-hover:text-primary-700 dark:group-hover:text-primary-300"
           >
             {idea.ideaName}

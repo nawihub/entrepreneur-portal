@@ -6,12 +6,22 @@ export const bigIdeaKeys = {
   detail: (id: string) => [...bigIdeaKeys.all, "detail", id] as const,
   list: (params?: unknown) => [...bigIdeaKeys.all, "list", params] as const,
   mine: (params?: unknown) => [...bigIdeaKeys.all, "mine", params] as const,
+  mineDetail: (id: string) => [...bigIdeaKeys.all, "mine-detail", id] as const,
 };
 
 export function useBigIdea(id: string | undefined) {
   return useQuery({
     queryKey: bigIdeaKeys.detail(id ?? ""),
     queryFn: () => bigIdeasApi.get(id!),
+    enabled: Boolean(id),
+  });
+}
+
+/** One of the signed-in user's own ideas, in any status. */
+export function useMyBigIdea(id: string | undefined) {
+  return useQuery({
+    queryKey: bigIdeaKeys.mineDetail(id ?? ""),
+    queryFn: () => bigIdeasApi.getMine(id!),
     enabled: Boolean(id),
   });
 }
@@ -54,7 +64,7 @@ export function usePublishBigIdea() {
   return useMutation({
     mutationFn: (id: string) => bigIdeasApi.publish(id),
     onSuccess: (idea) => {
-      queryClient.setQueryData(bigIdeaKeys.detail(idea.id), idea);
+      queryClient.setQueryData(bigIdeaKeys.mineDetail(idea.id), idea);
       return queryClient.invalidateQueries({ queryKey: bigIdeaKeys.all });
     },
   });

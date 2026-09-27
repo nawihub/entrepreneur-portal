@@ -114,7 +114,7 @@ function MyIdeas() {
       <ListResults
         query={feed}
         getKey={(i) => i.id}
-        renderItem={(idea) => <BigIdeaCard idea={idea} showStatus />}
+        renderItem={(idea) => <BigIdeaCard idea={idea} owned />}
         isFiltered={activeCount > 0}
         onClearFilters={clear}
         empty={{

@@ -48,7 +48,11 @@ export interface BigIdeaFilters {
 }
 
 export const bigIdeasApi = {
+  /** Public - approved ideas only (404 otherwise). */
   get: (id: string) => api.get<BigIdea>(`${BASE}/${id}`),
+
+  /** One of the caller's own ideas, in any status. */
+  getMine: (id: string) => api.get<BigIdea>(`${BASE}/mine/${id}`),
 
   /** Public browsing - the gateway only ever returns approved ideas. */
   list: (params?: PageParams & BigIdeaFilters) =>
@@ -72,9 +76,11 @@ export const bigIdeasApi = {
     return api.upload<BigIdea>(`${BASE}/${id}/supporting-material`, form, { query: { materialType } });
   },
 
-  /** Owner-only until the idea is approved, so it's fetched with the caller's token. */
-  downloadSupportingMaterial: (id: string, materialId: string) =>
-    api.blob(`${BASE}/${id}/materials/${materialId}`, { timeoutMs: 120_000 }),
+  /**
+   * Downloads a material by the url the gateway returned for it - the public route for approved
+   * ideas, or the owner-only route (which needs the caller's token) in the owner's view.
+   */
+  downloadSupportingMaterial: (url: string) => api.blob(url, { timeoutMs: 120_000 }),
 
   // Moderation (review/approve/decline) and deletion are admin-only and aren't exposed by the
   // web gateway at all.

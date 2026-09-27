@@ -124,7 +124,7 @@ export default function NewBigIdeaPage() {
 
       const idea = await createMutation.mutateAsync(payload);
       toast.success("Draft saved - add supporting materials, then publish it for review");
-      router.replace(`/big-ideas/${idea.id}`);
+      router.replace(`/big-ideas/mine/${idea.id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't save your idea");
     }
