@@ -187,6 +187,11 @@ function OwnerStatusPanel({ idea }: { idea: BigIdea }) {
       <div className="flex-1">
         <p className="font-display font-semibold">{title}</p>
         <p className="text-sm text-muted-foreground">{body}</p>
+        {idea.trackingId && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Tracking ID <span className="font-mono font-medium tracking-wider text-foreground">{idea.trackingId}</span>
+          </p>
+        )}
       </div>
       {idea.status === "PENDING" && (
         <Button

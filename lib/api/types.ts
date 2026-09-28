@@ -328,6 +328,8 @@ export interface SupportingMaterial {
 export interface BigIdea {
   id: string;
   ownerId?: string | null; // the submitting user; null only for ideas created before ownership existed
+  /** Only in the owner's view - for checking status on the public site without signing in. */
+  trackingId?: string | null;
   applicant: IdeaApplicantSummary;
   ideaName: string;
   oneLineDescription: string;
