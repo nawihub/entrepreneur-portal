@@ -464,6 +464,8 @@ export interface BusinessMeta {
 // ---------------------------------------------------------------------------
 
 export type OpportunityStatus =
+  // Created from the portal and visible only to its owner until they publish it.
+  | "DRAFT"
   | "PENDING"
   | "IN_REVIEW"
   | "APPROVED"

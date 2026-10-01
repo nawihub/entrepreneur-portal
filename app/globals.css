@@ -280,6 +280,7 @@
   --animate-grow-x: growX var(--duration-slower) var(--ease-out) both;
   --animate-fade-in: fadeIn var(--duration-normal) var(--ease-out) both;
   --animate-hero-zoom: heroZoom 1400ms var(--ease-out) both;
+  --animate-drift: drift 18s ease-in-out infinite;
 }
 
 @layer base {
@@ -544,4 +545,15 @@
 }
 .select-scroll::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--muted-foreground) / 0.55);
+}
+
+/* Slow drifting glows behind the login page's brand panel. */
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(40px, -30px, 0) scale(1.08); }
+  66% { transform: translate3d(-30px, 25px, 0) scale(0.95); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-drift { animation: none; }
 }

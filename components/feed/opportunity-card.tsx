@@ -23,14 +23,17 @@ function deadlineLabel(daysLeft: number) {
 /**
  * @param showStatus public listings only ever contain approved opportunities, so the status
  *                   badge is noise there - only show it where statuses actually vary.
+ * @param owned      the card is in the owner's own list: it shows the status and links to the
+ *                   owner's page (drafts and unapproved ones aren't public).
  */
-export function OpportunityCard({ opportunity, showStatus = false }: { opportunity: Opportunity; showStatus?: boolean }) {
+export function OpportunityCard({ opportunity, showStatus = false, owned = false }: { opportunity: Opportunity; showStatus?: boolean; owned?: boolean }) {
   const daysLeft = opportunity.deadline ? daysUntil(opportunity.deadline) : null;
   const isUrgent = daysLeft !== null && daysLeft >= 0 && daysLeft <= 7;
   const categories = opportunity.categories.map((c) =>
     c === "OTHER" && opportunity.categoryOther ? opportunity.categoryOther : labelFor(OPPORTUNITY_CATEGORIES, c),
   );
-  const flier = resolveMediaUrl(opportunity.flierUrl);
+  // Only approved fliers are public; the owner list shows the branded cover instead.
+  const flier = owned && opportunity.status !== "APPROVED" ? null : resolveMediaUrl(opportunity.flierUrl);
   const scope =
     opportunity.geographicScope === "OTHER" && opportunity.geographicScopeOther
       ? opportunity.geographicScopeOther
@@ -68,7 +71,7 @@ export function OpportunityCard({ opportunity, showStatus = false }: { opportuni
               <span className="rounded-full bg-black/35 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">+{categories.length - 2}</span>
             )}
           </div>
-          {showStatus && <StatusBadge status={opportunity.status} className="bg-card/95 shadow-sm" />}
+          {(showStatus || owned) && <StatusBadge status={opportunity.status} className="bg-card/95 shadow-sm" />}
         </div>
 
         {daysLeft !== null && (
@@ -86,7 +89,7 @@ export function OpportunityCard({ opportunity, showStatus = false }: { opportuni
 
       <div className="flex flex-1 flex-col gap-2 p-4">
         <Link
-          href={`/opportunities/${opportunity.id}`}
+          href={owned ? `/opportunities/mine/${opportunity.id}` : `/opportunities/${opportunity.id}`}
           className="line-clamp-2 font-display text-lg font-semibold leading-snug outline-none transition-colors after:absolute after:inset-0 after:content-[''] group-hover:text-secondary-700 dark:group-hover:text-secondary-300"
         >
           {opportunity.title}

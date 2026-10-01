@@ -18,10 +18,10 @@ const VIEW = { single: ["view"] } as const;
 const FILTERS = { single: ["q", "stage", "type"] } as const;
 const MY_FILTERS = { single: ["q", "status"] } as const;
 
-const pitchButton = (
+const submitButton = (
   <Button asChild>
     <Link href="/big-ideas/new">
-      <Plus className="size-4" /> Pitch an idea
+      <Plus className="size-4" /> Submit an idea
     </Link>
   </Button>
 );
@@ -29,7 +29,7 @@ const pitchButton = (
 export default function BigIdeasPage() {
   return (
     <div className="container-page py-6">
-      <ListPageHeader title="Big Ideas" description="Pitches from entrepreneurs across the network." action={pitchButton} />
+      <ListPageHeader title="Big Ideas" description="Ideas from entrepreneurs across the network." action={submitButton} />
       {/* useSearchParams needs a Suspense boundary for production builds. */}
       <Suspense>
         <BigIdeasContent />
@@ -86,10 +86,10 @@ function AllIdeas() {
         empty={{
           icon: Lightbulb,
           title: "No Big Ideas yet",
-          description: "Approved pitches from across the network will appear here.",
+          description: "Approved ideas from across the network will appear here.",
           action: (
             <Button size="sm" asChild>
-              <Link href="/big-ideas/new">Pitch an idea</Link>
+              <Link href="/big-ideas/new">Submit an idea</Link>
             </Button>
           ),
         }}
@@ -121,11 +121,11 @@ function MyIdeas() {
         onClearFilters={clear}
         empty={{
           icon: NotebookPen,
-          title: "You haven't pitched an idea yet",
+          title: "You haven't submitted an idea yet",
           description: "Start a draft, add your pitch deck or photos, then publish it for review.",
           action: (
             <Button size="sm" asChild>
-              <Link href="/big-ideas/new">Pitch an idea</Link>
+              <Link href="/big-ideas/new">Submit an idea</Link>
             </Button>
           ),
         }}

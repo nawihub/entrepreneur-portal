@@ -15,6 +15,7 @@ import { entrepreneursApi } from "@/lib/api/entrepreneurs";
 import { useOwnEntrepreneurProfile } from "@/lib/queries/entrepreneurs";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { NATIONALITIES } from "@/lib/data/nationalities";
+import { DISTRICTS, canonicalDistrict, chiefdomsOf } from "@/lib/data/sierra-leone";
 import { SKILL_GROUPS, SKILLS, skillLabel } from "@/lib/data/skills";
 import { cn } from "@/lib/utils";
 import type { CommonGender, EntrepreneurProfile, UserInfo } from "@/lib/api/types";
@@ -87,9 +88,18 @@ function OnboardingForm({ profile, isMissingProfile, user, onDone, onFailed }: O
   const [gender, setGender] = useState<CommonGender>((profile?.gender as CommonGender) || "PREFER_NOT_SAY");
   const [dateOfBirth, setDateOfBirth] = useState(profile?.dateOfBirth ?? "");
   const [nationality, setNationality] = useState(profile?.nationality ?? "");
-  const [district, setDistrict] = useState(profile?.district ?? "");
+  // Districts and chiefdoms are picked from lists now; a district typed before that is kept if it matches one.
+  const [district, setDistrictValue] = useState(canonicalDistrict(profile?.district));
   const [currentLocation, setCurrentLocation] = useState(profile?.currentLocation ?? "");
-  const [chiefdom, setChiefdom] = useState(profile?.chiefdom ?? "");
+  const [chiefdom, setChiefdom] = useState(
+    chiefdomsOf(profile?.district).includes(profile?.chiefdom ?? "") ? (profile?.chiefdom ?? "") : "",
+  );
+  const chiefdomOptions = useMemo(() => chiefdomsOf(district), [district]);
+  // A new district clears a chiefdom that doesn't belong to it.
+  const setDistrict = (next: string) => {
+    setDistrictValue(next);
+    if (!chiefdomsOf(next).includes(chiefdom)) setChiefdom("");
+  };
   const [skills, setSkills] = useState<string[]>(profile?.skills ?? []);
   const [skillSearch, setSkillSearch] = useState("");
 
@@ -237,14 +247,40 @@ function OnboardingForm({ profile, isMissingProfile, user, onDone, onFailed }: O
                   <Label htmlFor="district">
                     District <span className="text-error">*</span>
                   </Label>
-                  <Input id="district" value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="e.g. Western Area Urban" />
+                  <Select value={district} onValueChange={setDistrict}>
+                    <SelectTrigger id="district">
+                      <SelectValue placeholder="Select your district" />
+                    </SelectTrigger>
+                    <SelectContent searchPlaceholder="Search districts…">
+                      {DISTRICTS.map((d) => (
+                        <SelectItem key={d.name} value={d.name}>
+                          {d.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="currentLocation">
-                    Current location <span className="text-error">*</span>
-                  </Label>
-                  <Input id="currentLocation" value={currentLocation} onChange={(e) => setCurrentLocation(e.target.value)} placeholder="e.g. Freetown" />
+                  <Label htmlFor="chiefdom">Chiefdom</Label>
+                  <Select value={chiefdom} onValueChange={setChiefdom} disabled={!district}>
+                    <SelectTrigger id="chiefdom">
+                      <SelectValue placeholder={district ? "Select your chiefdom" : "Choose a district first"} />
+                    </SelectTrigger>
+                    <SelectContent searchPlaceholder="Search chiefdoms…">
+                      {chiefdomOptions.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="currentLocation">
+                  Current location <span className="text-error">*</span>
+                </Label>
+                <Input id="currentLocation" value={currentLocation} onChange={(e) => setCurrentLocation(e.target.value)} placeholder="e.g. Freetown" />
               </div>
             </CardContent>
           </>
@@ -257,10 +293,6 @@ function OnboardingForm({ profile, isMissingProfile, user, onDone, onFailed }: O
               <CardDescription>Optional, but it helps people find and understand you faster.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="chiefdom">Chiefdom</Label>
-                <Input id="chiefdom" value={chiefdom} onChange={(e) => setChiefdom(e.target.value)} />
-              </div>
               <div className="space-y-1.5">
                 <Label>Skills</Label>
                 {skills.length > 0 && (

@@ -29,6 +29,13 @@ export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const hasSession = Boolean(request.cookies.get(REFRESH_COOKIE)?.value);
 
+  // The home page is the login page; signed-in visitors go straight to their feed.
+  if (pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = hasSession ? "/feed" : "/login";
+    return NextResponse.redirect(url);
+  }
+
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
   if (isProtected && !hasSession) {
     const url = request.nextUrl.clone();
@@ -50,6 +57,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/feed/:path*",
     "/profile/:path*",
     "/onboarding/:path*",

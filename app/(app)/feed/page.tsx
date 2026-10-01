@@ -78,7 +78,7 @@ export default function FeedPage() {
             </TabsList>
             <Button size="sm" asChild>
               <Link href="/big-ideas/new">
-                <Plus className="size-4" /> Pitch an idea
+                <Plus className="size-4" /> Submit an idea
               </Link>
             </Button>
           </div>
@@ -111,7 +111,7 @@ export default function FeedPage() {
             {bigIdeas.isLoading ? (
               <CardSkeletons />
             ) : ideaItems.length === 0 ? (
-              <EmptyState icon={Lightbulb} title="No Big Ideas yet" description="Be the first to pitch one." />
+              <EmptyState icon={Lightbulb} title="No Big Ideas yet" description="Be the first to submit one." />
             ) : (
               <Tiles>{ideaItems.map((idea) => <BigIdeaCard key={idea.id} idea={idea} />)}</Tiles>
             )}

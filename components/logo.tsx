@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 import mark from "@/public/nawehub-mark.png";
 
@@ -15,8 +14,11 @@ interface LogoProps {
    * nav, favicons-in-app contexts). */
   markOnly?: boolean;
   className?: string;
+  /** Where the logo leads - the main NaWeHub site by default; null for no link. */
   href?: string | null;
 }
+
+export const NAWEHUB_SITE = "https://nawehub.com";
 
 /**
  * Pairs the NaWeHub hexagon/network-nodes mark with the "NaWeHub" wordmark
@@ -26,11 +28,12 @@ interface LogoProps {
  * colors); only the wordmark text color follows the theme via `currentColor`
  * / `text-foreground`.
  */
-export function Logo({ size = "md", markOnly = false, className, href = "/" }: LogoProps) {
+export function Logo({ size = "md", markOnly = false, className, href = NAWEHUB_SITE }: LogoProps) {
   const { icon, text } = SIZE_MAP[size];
 
   const content = (
-    <span className={cn("inline-flex items-center gap-2 select-none", className)}>
+    // The wordmark takes its colour from here, so `className="text-white"` works on dark panels.
+    <span className={cn("inline-flex items-center gap-2 select-none text-foreground", className)}>
       <Image
         src={mark}
         alt="NaWeHub"
@@ -40,7 +43,7 @@ export function Logo({ size = "md", markOnly = false, className, href = "/" }: L
         className="shrink-0"
       />
       {!markOnly && (
-        <span className={cn("font-display font-semibold tracking-tight text-foreground", text)}>
+        <span className={cn("font-display font-semibold tracking-tight", text)}>
           NaWeHub
         </span>
       )}
@@ -50,8 +53,8 @@ export function Logo({ size = "md", markOnly = false, className, href = "/" }: L
   if (!href) return content;
 
   return (
-    <Link href={href} aria-label="NaWeHub home" className="inline-flex">
+    <a href={href} aria-label="NaWeHub home" className="inline-flex">
       {content}
-    </Link>
+    </a>
   );
 }

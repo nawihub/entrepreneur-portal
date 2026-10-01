@@ -41,6 +41,28 @@ export const OPPORTUNITY_BENEFICIARIES: FilterOption[] = [
   option("OTHER", "Other"),
 ];
 
+// opportunity-service domain/opportunity/vo/OrganizationType
+export const OPPORTUNITY_ORG_TYPES: FilterOption[] = [
+  option("DEVELOPMENT_PARTNER", "Development partner"),
+  option("NGO", "NGO"),
+  option("INNOVATION_HUB", "Innovation hub"),
+  option("PRIVATE_SECTOR", "Private sector"),
+  option("TECH_HUB", "Tech hub"),
+  option("UNIVERSITY_RESEARCH", "University / research"),
+  option("FOUNDATION", "Foundation"),
+  option("GOVERNMENT_AGENCY", "Government agency"),
+  option("OTHER", "Other"),
+];
+
+// Statuses of the entrepreneur's own opportunities (the public list only has approved ones).
+export const OPPORTUNITY_STATUSES: FilterOption[] = [
+  option("DRAFT", "Draft"),
+  option("PENDING", "Awaiting review"),
+  option("IN_REVIEW", "In review"),
+  option("APPROVED", "Approved"),
+  option("DECLINED", "Declined"),
+];
+
 // opportunity-service domain/opportunity/vo/GeographicScope
 export const OPPORTUNITY_SCOPES: FilterOption[] = [
   option("SIERRA_LEONE_ONLY", "Sierra Leone only"),

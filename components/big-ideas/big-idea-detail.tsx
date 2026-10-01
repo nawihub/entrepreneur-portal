@@ -175,7 +175,7 @@ function OwnerStatusPanel({ idea }: { idea: BigIdea }) {
     DECLINED: {
       icon: Lock,
       title: "Declined",
-      body: "See the reason below. You're welcome to pitch an improved version as a new idea.",
+      body: "See the reason below. You're welcome to submit an improved version as a new idea.",
       tone: "border-error/30 bg-error/10",
     },
   };

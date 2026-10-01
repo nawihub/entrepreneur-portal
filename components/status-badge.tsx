@@ -2,6 +2,7 @@ import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type Status =
+  | "DRAFT"
   | "SUBMITTED"
   | "IN_REVIEW"
   | "APPROVED"
@@ -18,6 +19,7 @@ type Status =
   | "INACTIVE";
 
 const STATUS_STYLES: Record<Status, { label: string; variant: BadgeProps["variant"] }> = {
+  DRAFT: { label: "Draft", variant: "outline" },
   SUBMITTED: { label: "Submitted", variant: "info" },
   IN_REVIEW: { label: "In review", variant: "warning" },
   APPROVED: { label: "Approved", variant: "success" },
