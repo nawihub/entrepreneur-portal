@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
@@ -13,19 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCreateBigIdea } from "@/lib/queries/big-ideas";
 import { cn } from "@/lib/utils";
-import type { CreateBigIdeaPayload } from "@/lib/api/big-ideas";
-import type { IdeaApplicant } from "@/lib/api/types";
+import type { CreateBigIdeaPayload, SubmissionType } from "@/lib/api/big-ideas";
+import { ApiError } from "@/lib/api/http";
 
-const STEPS = ["About you", "The idea", "Market & model", "Stage & traction", "Risks & impact"];
+const STEPS = ["The idea", "Market & model", "Stage & traction", "Risks & impact"];
 
-const GENDER_OPTIONS: Array<{ value: IdeaApplicant["gender"]; label: string }> = [
-  { value: "MALE", label: "Male" },
-  { value: "FEMALE", label: "Female" },
-  { value: "OTHER", label: "Other" },
-  { value: "PREFER_NOT_TO_SAY", label: "Prefer not to say" },
-];
-
-const SUBMISSION_TYPE_OPTIONS: Array<{ value: IdeaApplicant["submissionType"]; label: string }> = [
+const SUBMISSION_TYPE_OPTIONS: Array<{ value: SubmissionType; label: string }> = [
   { value: "INDIVIDUAL", label: "Individual" },
   { value: "TEAM", label: "Team" },
   { value: "EXISTING_BUSINESS", label: "Existing business" },
@@ -40,19 +34,8 @@ const STAGE_OPTIONS: Array<{ value: CreateBigIdeaPayload["stage"]; label: string
   { value: "ALREADY_OPERATING", label: "Already operating" },
 ];
 
-const emptyApplicant: IdeaApplicant = {
-  fullName: "",
-  gender: "PREFER_NOT_TO_SAY",
-  age: 18,
-  phone: "",
-  email: "",
-  location: "",
-  occupation: "",
-  submissionType: "INDIVIDUAL",
-};
-
 const emptyForm: CreateBigIdeaPayload = {
-  applicant: emptyApplicant,
+  submissionType: "INDIVIDUAL",
   ideaName: "",
   oneLineDescription: "",
   description: "",
@@ -93,24 +76,18 @@ export default function NewBigIdeaPage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<CreateBigIdeaPayload>(emptyForm);
 
-  function setApplicant<K extends keyof IdeaApplicant>(key: K, value: IdeaApplicant[K]) {
-    setForm((f) => ({ ...f, applicant: { ...f.applicant, [key]: value } }));
-  }
-
   function setField<K extends keyof CreateBigIdeaPayload>(key: K, value: CreateBigIdeaPayload[K]) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
   const canProceed = [
-    // Step 0: applicant
-    Boolean(form.applicant.fullName && form.applicant.phone && form.applicant.email && form.applicant.location && form.applicant.occupation),
-    // Step 1: the idea
+    // Step 0: the idea
     Boolean(form.ideaName && form.oneLineDescription && form.description && form.problemStatement && form.proposedSolution),
-    // Step 2: market & model
+    // Step 1: market & model
     Boolean(form.targetCustomers && form.revenueModel),
-    // Step 3: stage & traction - stage always has a value
+    // Step 2: stage & traction - stage always has a value
     true,
-    // Step 4: risks & impact - all optional
+    // Step 3: risks & impact - all optional
     true,
   ];
 
@@ -126,6 +103,11 @@ export default function NewBigIdeaPage() {
       toast.success("Draft saved - add supporting materials, then publish it for review");
       router.replace(`/big-ideas/mine/${idea.id}`);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        // The gateway fills in who's submitting from the profile, and it isn't complete yet.
+        toast.error(err.message, { action: { label: "Complete profile", onClick: () => router.push("/onboarding") } });
+        return;
+      }
       toast.error(err instanceof Error ? err.message : "Couldn't save your idea");
     }
   }
@@ -159,59 +141,15 @@ export default function NewBigIdeaPage() {
         {step === 0 && (
           <>
             <CardHeader>
-              <CardTitle>About you</CardTitle>
-              <CardDescription>Who&apos;s submitting this idea?</CardDescription>
+              <CardTitle>The idea</CardTitle>
+              <CardDescription>
+                What is it, and what problem does it solve? Your name, contact details and location come from your
+                profile - <Link href="/profile" className="underline">update them there</Link>.
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-              <Field label="Full name" required>
-                <Input value={form.applicant.fullName} onChange={(e) => setApplicant("fullName", e.target.value)} />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Gender" required>
-                  <Select value={form.applicant.gender} onValueChange={(v) => setApplicant("gender", v as IdeaApplicant["gender"])}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {GENDER_OPTIONS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Age" required>
-                  <Input
-                    type="number"
-                    min={13}
-                    max={120}
-                    value={form.applicant.age}
-                    onChange={(e) => setApplicant("age", Number(e.target.value))}
-                  />
-                </Field>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Phone" required>
-                  <Input value={form.applicant.phone} onChange={(e) => setApplicant("phone", e.target.value)} />
-                </Field>
-                <Field label="Email" required>
-                  <Input type="email" value={form.applicant.email} onChange={(e) => setApplicant("email", e.target.value)} />
-                </Field>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Location" required>
-                  <Input value={form.applicant.location} onChange={(e) => setApplicant("location", e.target.value)} placeholder="e.g. Freetown" />
-                </Field>
-                <Field label="Occupation" required>
-                  <Input value={form.applicant.occupation} onChange={(e) => setApplicant("occupation", e.target.value)} />
-                </Field>
-              </div>
               <Field label="Submitting as" required>
-                <Select
-                  value={form.applicant.submissionType}
-                  onValueChange={(v) => setApplicant("submissionType", v as IdeaApplicant["submissionType"])}
-                >
+                <Select value={form.submissionType} onValueChange={(v) => setField("submissionType", v as SubmissionType)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -224,17 +162,6 @@ export default function NewBigIdeaPage() {
                   </SelectContent>
                 </Select>
               </Field>
-            </CardContent>
-          </>
-        )}
-
-        {step === 1 && (
-          <>
-            <CardHeader>
-              <CardTitle>The idea</CardTitle>
-              <CardDescription>What is it, and what problem does it solve?</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
               <Field label="Idea name" required>
                 <Input value={form.ideaName} onChange={(e) => setField("ideaName", e.target.value)} />
               </Field>
@@ -266,7 +193,7 @@ export default function NewBigIdeaPage() {
           </>
         )}
 
-        {step === 2 && (
+        {step === 1 && (
           <>
             <CardHeader>
               <CardTitle>Market & business model</CardTitle>
@@ -321,7 +248,7 @@ export default function NewBigIdeaPage() {
           </>
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <>
             <CardHeader>
               <CardTitle>Stage & traction</CardTitle>
@@ -361,7 +288,7 @@ export default function NewBigIdeaPage() {
           </>
         )}
 
-        {step === 4 && (
+        {step === 3 && (
           <>
             <CardHeader>
               <CardTitle>Risks & impact</CardTitle>

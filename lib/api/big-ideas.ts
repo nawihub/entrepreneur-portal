@@ -1,12 +1,15 @@
 import { api } from "@/lib/api/http";
 import type { BigIdea, IdeaApplicant, IdeaStage, MaterialType, Page, PageParams } from "@/lib/api/types";
 
+export type SubmissionType = IdeaApplicant["submissionType"];
+
 const BASE = "/api/v1/big-ideas";
 
 // Mirrors IdeaDto.CreateIdeaDto on the gateway - fields marked required are
-// @NotBlank/@NotNull on the backend and will 400 without them.
+// @NotBlank/@NotNull on the backend and will 400 without them. Who's submitting (name, contact
+// details, location) isn't sent: the gateway takes it from the signed-in entrepreneur's profile.
 export interface CreateBigIdeaPayload {
-  applicant: IdeaApplicant;
+  submissionType: SubmissionType;
   ideaName: string;
   oneLineDescription: string;
   description: string;
