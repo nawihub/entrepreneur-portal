@@ -16,6 +16,7 @@ import {
   Settings,
   UserRound,
   Bookmark,
+  Trophy,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -36,9 +37,11 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { cn } from "@/lib/utils";
 import { resolveMediaUrl } from "@/lib/media-url";
 
-const NAV_ITEMS = [
+// `short` is used in the phone tab bar, where six full labels don't fit.
+const NAV_ITEMS: { href: string; label: string; short?: string; icon: typeof Home }[] = [
   { href: "/feed", label: "Feed", icon: Home },
   { href: "/big-ideas", label: "Big Ideas", icon: Lightbulb },
+  { href: "/competitions", label: "Competitions", short: "Compete", icon: Trophy },
   { href: "/businesses", label: "Businesses", icon: Building2 },
   { href: "/opportunities", label: "Opportunities", icon: HandCoins },
   { href: "/resources", label: "Resources", icon: BookOpen },
@@ -195,7 +198,7 @@ export function TopNav() {
               )}
             >
               <item.icon className={cn("size-5 transition-transform duration-slow ease-spring", active && "-translate-y-0.5 scale-110")} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span className="text-[10px] font-medium">{item.short ?? item.label}</span>
             </Link>
           );
         })}

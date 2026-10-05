@@ -171,3 +171,44 @@ export const api = {
   upload: <T>(path: string, form: FormData, options?: Omit<RequestOptions, "method" | "form" | "body">) =>
     request<T>(path, { ...options, method: "POST", form }),
 };
+
+/**
+ * Multipart upload with progress, for large files (e.g. pitch videos) - fetch can't report upload
+ * progress. Same auth and one-retry-after-refresh behaviour as {@link api}; no timeout, since a big
+ * file on a slow connection legitimately takes a while.
+ */
+export function uploadWithProgress<T>(
+  path: string,
+  form: FormData,
+  { query, onProgress, signal }: { query?: RequestOptions["query"]; onProgress?: (fraction: number) => void; signal?: AbortSignal } = {},
+): Promise<T> {
+  const send = (token: string | null) =>
+    new Promise<{ status: number; body: unknown }>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", buildUrl(path, query));
+      if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress?.(e.loaded / e.total); };
+      xhr.onload = () => {
+        let body: unknown = xhr.responseText;
+        try { body = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch { /* not JSON */ }
+        resolve({ status: xhr.status, body });
+      };
+      xhr.onerror = () => reject(new ApiError(0, null, "Upload failed - check your connection and try again"));
+      xhr.onabort = () => reject(new ApiError(0, null, "Upload cancelled"));
+      signal?.addEventListener("abort", () => xhr.abort(), { once: true });
+      xhr.send(form);
+    });
+
+  return (async () => {
+    let res = await send(getAccessToken());
+    if (res.status === 401) {
+      const token = await refreshAccessToken();
+      if (token) res = await send(token);
+    }
+    if (res.status < 200 || res.status >= 300) {
+      const errBody = res.body && typeof res.body === "object" ? (res.body as ApiErrorBody) : null;
+      throw new ApiError(res.status, errBody, errBody?.message ?? errBody?.detail ?? `Upload failed with ${res.status}`);
+    }
+    return res.body as T;
+  })();
+}
